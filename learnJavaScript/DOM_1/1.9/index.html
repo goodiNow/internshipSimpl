@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1.9</title>
+
+    <style>
+      #field {
+        width: 200px;
+        border: 10px groove black;
+        background-color: #00ff00;
+        position: relative;
+      }
+
+      #ball {
+        position: absolute;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="field">
+      <img
+        src="https://en.js.cx/clipart/ball.svg"
+        width="40"
+        height="40"
+        id="ball"
+      />
+      . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . . . .
+    </div>
+  </body>
+  <script>
+    //task 1
+    // let scrollBottom = elem.scrollHeight - elem.scrollTop - elem.clientHeight;
+
+    //task 2
+    let div = document.createElement("div");
+
+    div.style.overflowY = "scroll";
+    div.style.width = "50px";
+    div.style.height = "50px";
+
+    document.body.append(div);
+    let scrollWidth = div.offsetWidth - div.clientWidth;
+
+    div.remove();
+
+    console.log(scrollWidth);
+
+    //task 3
+
+    ball.style.left =
+      Math.round(field.clientWidth / 2 - ball.offsetWidth / 2) + "px";
+    ball.style.top =
+      Math.round(field.clientHeight / 2 - ball.offsetHeight / 2) + "px";
+  </script>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2.4</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <fieldset id="contents">
+      <legend>#contents</legend>
+      <p>
+        Как насчёт того, чтобы прочитать
+        <a href="https://wikipedia.org">Википедию</a> или посетить
+        <a href="https://w3.org"><i>W3.org</i></a> и узнать о современных
+        стандартах?
+      </p>
+    </fieldset>
+
+    <p>
+      <img
+        id="largeImg"
+        src="https://en.js.cx/gallery/img1-lg.jpg"
+        alt="Large image"
+      />
+    </p>
+
+    <ul id="thumbs">
+      <li>
+        <a href="https://en.js.cx/gallery/img2-lg.jpg" title="Image 2"
+          ><img src="https://en.js.cx/gallery/img2-thumb.jpg"
+        /></a>
+      </li>
+      <li>
+        <a href="https://en.js.cx/gallery/img3-lg.jpg" title="Image 3"
+          ><img src="https://en.js.cx/gallery/img3-thumb.jpg"
+        /></a>
+      </li>
+      <li>
+        <a href="https://en.js.cx/gallery/img4-lg.jpg" title="Image 4"
+          ><img src="https://en.js.cx/gallery/img4-thumb.jpg"
+        /></a>
+      </li>
+      <li>
+        <a href="https://en.js.cx/gallery/img5-lg.jpg" title="Image 5"
+          ><img src="https://en.js.cx/gallery/img5-thumb.jpg"
+        /></a>
+      </li>
+      <li>
+        <a href="https://en.js.cx/gallery/img6-lg.jpg" title="Image 6"
+          ><img src="https://en.js.cx/gallery/img6-thumb.jpg"
+        /></a>
+      </li>
+    </ul>
+
+    <script>
+      //task 1
+      contents.onclick = function (event) {
+        function handleLink(href) {
+          let isLeaving = confirm(`Перейти на ${href}?`);
+          if (!isLeaving) return false;
+        }
+
+        let target = event.target.closest("a");
+
+        if (target && contents.contains(target)) {
+          return handleLink(target.getAttribute("href"));
+        }
+      };
+
+      //task 2
+      thumbs.onclick = function (event) {
+        let thumbnail = event.target.closest("a");
+
+        if (!thumbnail) return;
+        showThumbnail(thumbnail.href, thumbnail.title);
+        event.preventDefault();
+      };
+
+      function showThumbnail(href, title) {
+        largeImg.src = href;
+        largeImg.alt = title;
+      }
+    </script>
+  </body>
+</html>

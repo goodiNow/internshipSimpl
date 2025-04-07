@@ -1,0 +1,55 @@
+h3 {
+  margin: 0;
+  padding-right: 20px;
+  padding-bottom: 0.3em;
+  font-size: 1.1em;
+}
+
+p {
+  margin: 0;
+  padding: 0 0 0.5em;
+}
+
+.pane {
+  position: relative;
+  border-top: solid 2px #c4df9b;
+  background: #edf5e1;
+  padding: 10px 20px 10px;
+}
+
+.remove-button {
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 10px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 24px;
+  height: 24px;
+  color: darkred;
+  font-size: 110%;
+}
+
+.tree span:hover {
+  font-weight: bold;
+}
+
+.tree span {
+  cursor: pointer;
+}
+
+table {
+  border-collapse: collapse;
+}
+th,
+td {
+  border: 1px solid black;
+  padding: 4px;
+}
+th {
+  cursor: pointer;
+}
+th:hover {
+  background: yellow;
+}

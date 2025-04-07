@@ -1,0 +1,50 @@
+.slider {
+  margin: 5px;
+  border-radius: 5px;
+  background: #e0e0e0;
+  background: linear-gradient(left top, #e0e0e0, #eeeeee);
+  width: 310px;
+  height: 15px;
+}
+
+#field {
+  float: left;
+  background: url(https://js.cx/drag-heroes/field.png);
+  width: 800px;
+  height: 600px;
+}
+
+.hero {
+  float: left;
+  background: url(https://js.cx/drag-heroes/heroes.png);
+  width: 130px;
+  height: 128px;
+}
+
+#hero1 {
+  background-position: 0 0;
+}
+
+#hero2 {
+  background-position: 0 -128px;
+}
+
+#hero3 {
+  background-position: -120px 0;
+}
+
+#hero4 {
+  background-position: -125px -128px;
+}
+
+#hero5 {
+  background-position: -248px -128px;
+}
+
+#hero6 {
+  background-position: -244px 0;
+}
+
+.draggable {
+  cursor: pointer;
+}

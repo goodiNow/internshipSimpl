@@ -1,0 +1,17 @@
+{
+  "name": "1sttesttask",
+  "version": "1.0.0",
+  "description": "SimplGoida",
+  "main": "home.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Artem",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "ag-grid-community": "^33.2.1",
+    "bootstrap": "^5.3.3",
+    "echarts": "^5.6.0"
+  }
+}

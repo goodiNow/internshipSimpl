@@ -1,0 +1,28 @@
+#largeImg {
+  border: solid 1px #ccc;
+  padding: 5px;
+  width: 550px;
+  height: 400px;
+}
+
+#thumbs a {
+  float: left;
+  margin: 2px;
+  border: solid 1px #ccc;
+  padding: 3px;
+  width: 100px;
+  height: 100px;
+}
+
+#thumbs a:hover {
+  border-color: #ff9900;
+}
+
+#thumbs li {
+  list-style: none;
+}
+
+#thumbs {
+  margin: 0;
+  padding: 0;
+}

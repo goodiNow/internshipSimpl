@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1.7</title>
+  </head>
+  <body>
+    <ol id="elem">
+      <li>Привет</li>
+      <li>Мир</li>
+    </ol>
+
+    <div id="container"></div>
+
+    <ul>
+      <li>
+        Животные
+        <ul>
+          <li>
+            Млекопитающие
+            <ul>
+              <li>Коровы</li>
+              <li>Ослы</li>
+              <li>Собаки</li>
+              <li>Тигры</li>
+            </ul>
+          </li>
+          <li>
+            Другие
+            <ul>
+              <li>Змеи</li>
+              <li>Птицы</li>
+              <li>Ящерицы</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li>
+        Рыбы
+        <ul>
+          <li>
+            Аквариумные
+            <ul>
+              <li>Гуппи</li>
+              <li>Скалярии</li>
+            </ul>
+          </li>
+          <li>
+            Морские
+            <ul>
+              <li>Морская форель</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+  </body>
+  <script>
+    //task 1
+    function clear(elem) {
+      elem.innerHTML = "";
+    }
+    clear(elem);
+
+    //task 2
+    let ul = document.createElement("ul");
+    document.body.append(ul);
+
+    while (true) {
+      let text = prompt("Введите содержимое пункта списка:", "");
+      if (!text) break;
+
+      let li = document.createElement("li");
+      li.textContent = text;
+      ul.append(li);
+    }
+
+    //task 3
+    let data = {
+      Рыбы: {
+        форель: {},
+        лосось: {},
+      },
+
+      Деревья: {
+        Огромные: {
+          секвойя: {},
+          дуб: {},
+        },
+        Цветковые: {
+          яблоня: {},
+          магнолия: {},
+        },
+      },
+    };
+
+    function createTree(container, obj) {
+      container.innerHTML = createTreeText(obj);
+    }
+
+    function createTreeText(obj) {
+      let li = "";
+      let ul;
+      for (let key in obj) {
+        li += "<li>" + key + createTreeText(obj[key]) + "</li>";
+      }
+      if (li) {
+        ul = "<ul>" + li + "</ul>";
+      }
+      return ul || "";
+    }
+
+    createTree(container, data);
+
+    //task 4
+    let lis = document.getElementsByTagName("li");
+
+    for (let li of lis) {
+      let descendantsCount = li.getElementsByTagName("li").length;
+      if (!descendantsCount) continue;
+
+      li.firstChild.data += " [" + descendantsCount + "]";
+    }
+  </script>
+</html>

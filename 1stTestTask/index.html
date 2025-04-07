@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>First Test Task</title>
+    <link
+      rel="stylesheet"
+      href="./node_modules/bootstrap/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="src/styles/main.css" />
+  </head>
+  <body>
+    <header class="page-header d-flex">
+      <button type="button" class="btn btn-primary" id="show-tables">
+        Таблицы
+      </button>
+      <button type="button" class="btn btn-primary" id="show-charts">
+        Графики
+      </button>
+    </header>
+
+    <div class="tables-container">
+      <div class="grid-wrapper">
+        <div class="header-container">
+          <div class="table-title fs-5 text fw-bold">Доходы</div>
+          <div class="button-container">
+            <input
+              class="btn btn-success open-modal-add"
+              type="button"
+              value="Добавить"
+              data-target="grid1"
+            />
+            <input
+              class="btn btn-danger delete-btn"
+              type="button"
+              value="Удалить"
+            />
+          </div>
+        </div>
+        <div id="grid1" class="ag-theme-alpine" style="height: 400px"></div>
+      </div>
+
+      <div class="grid-wrapper">
+        <div class="header-container">
+          <div class="table-title fs-5 text fw-bold">Расходы</div>
+          <div class="button-container">
+            <input
+              class="btn btn-success open-modal-add"
+              type="button"
+              value="Добавить"
+              data-target="grid2"
+            />
+            <input
+              class="btn btn-danger delete-btn"
+              type="button"
+              value="Удалить"
+            />
+          </div>
+        </div>
+        <div id="grid2" class="ag-theme-alpine" style="height: 400px"></div>
+      </div>
+    </div>
+
+    <div class="charts-container" style="display: none; height: 400px">
+      <div id="chart1" style="width: 100%; height: 100%"></div>
+      <div id="chart2" style="width: 100%; height: 100%"></div>
+    </div>
+
+    <div id="modal-menu" class="modal-menu">
+      <div class="modal-content">
+        <div class="modal-title fs-6 text fw-bold" style="padding-bottom: 20px">
+          Добавить информацию
+        </div>
+        <div class="modal-input-container">
+          <input
+            type="text"
+            name="category"
+            id="modal-category"
+            placeholder="Категория"
+          />
+          <input type="text" name="sum" id="modal-sum" placeholder="Сумма" />
+          <input type="text" name="date" id="modal-date" placeholder="Дата" />
+          <button id="modal-save-btn" class="btn btn-success">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./node_modules/ag-grid-community/dist/ag-grid-community.min.js"></script>
+    <script src="./node_modules/echarts/dist/echarts.js"></script>
+    <script type="module" src="src/js/home.js"></script>
+  </body>
+</html>

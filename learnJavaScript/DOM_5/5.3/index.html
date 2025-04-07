@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>5.3</title>
+  </head>
+  <body>
+    <script>
+      function preloadImages(sources, callback) {
+        let counter = 0;
+        let total = sources.length;
+
+        function onLoadOrError() {
+          counter++;
+          if (counter === total) {
+            callback();
+          }
+        }
+
+        for (let source of sources) {
+          let img = new Image();
+          img.onload = onLoadOrError;
+          img.onerror = onLoadOrError;
+          img.src = source;
+        }
+      }
+
+      let sources = [
+        "https://en.js.cx/images-load/1.jpg",
+        "https://en.js.cx/images-load/2.jpg",
+        "https://en.js.cx/images-load/3.jpg",
+      ];
+
+      preloadImages(sources, function () {
+        alert("Все изображения загружены или ошибка при загрузке.");
+      });
+    </script>
+  </body>
+</html>
