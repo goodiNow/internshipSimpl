@@ -12,13 +12,40 @@ const modalSum = document.getElementById("modal-sum");
 const modalDate = document.getElementById("modal-date");
 const modalSaveBtn = document.getElementById("modal-save-btn");
 
-const openModalBtns = document.querySelectorAll(".open-modal-add");
+const openModalAdd = document.querySelectorAll(".open-modal-add");
+const openModalEdit = document.querySelectorAll(".open-modal-edit");
 const deleteBtns = document.querySelectorAll(".delete-btn");
 
-const { firstGridInstance, secondGridInstance } = initGrid();  // Ссылаемся на API таблиц
-
-let activeGrid = null;
 let chartInitialized = false;
+let currentTargetGrid = null;
+
+const {
+  gridIncomeData,
+  gridExpensesData,
+  gridIncomeOptions,
+  gridExpensesOptions,
+} = initGrid();
+
+let gridIncomeApi;
+let gridExpensesApi;
+
+gridIncomeOptions.onGridReady = (event) => {
+  gridIncomeApi = event.api;
+  window.gridIncomeApi = gridIncomeApi;
+};
+
+gridExpensesOptions.onGridReady = (event) => {
+  gridExpensesApi = event.api;
+  window.gridExpensesApi = gridExpensesApi;
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  const IncomeGrid = document.querySelector("#incomeGrid");
+  const expensesGrid = document.querySelector("#expensesGrid");
+
+  agGrid.createGrid(IncomeGrid, gridIncomeOptions);
+  agGrid.createGrid(expensesGrid, gridExpensesOptions);
+});
 
 showChartsBtn.addEventListener("click", () => {
   tablesContainer.style.display = "none";
@@ -35,58 +62,48 @@ showTablesBtn.addEventListener("click", () => {
   chartsContainer.style.display = "none";
 });
 
-openModalBtns.forEach((btn) => {
+openModalAdd.forEach((btn) => {
   btn.addEventListener("click", () => {
-    const targetGrid = btn.getAttribute("data-target");
+    modalMenu.style.display = "flex";
 
-    if (targetGrid === "grid1") {
-      activeGrid = firstGridInstance;  // Используем первую таблицу
-    } else if (targetGrid === "grid2") {
-      activeGrid = secondGridInstance;  // Используем вторую таблицу
-    }
+    modalMenu.dataset.editing = "false";
 
-    console.log(activeGrid); // Логирование активной таблицы
+    modalMenu.dataset.gridType = btn.dataset.target === "grid1" ? "income" : "expenses";
 
-    if (activeGrid) {
-      modalMenu.style.display = "flex";
-    } else {
-      console.error("Active grid is not set!");
-    }
+    modalCategory.value = "";
+    modalSum.value = "";
+    modalDate.value = "";
   });
 });
 
 modalSaveBtn.addEventListener("click", () => {
-  console.log("Кнопка 'Добавить' нажата!");
-
-  const category = modalCategory.value.trim();
-  const sum = modalSum.value.trim();
-  const date = modalDate.value.trim();
-
-  if (!activeGrid || !category || !sum || !date) return;
-
   const newRow = {
-    Категория: category,
-    Сумма: sum,
-    Дата: date,
+    Категория: modalCategory.value,
+    Сумма: modalSum.value,
+    Дата: modalDate.value,
   };
 
-  if (activeGrid) {
-    activeGrid.applyTransaction({ add: [newRow] });  // Добавляем новую строку
+  const gridType = modalMenu.dataset.gridType;
+
+  if (modalMenu.dataset.editing === "true") {
+    const api =
+      gridType === "income" ? window.gridIncomeApi : window.gridExpensesApi;
+    const rowId = modalMenu.dataset.rowId;
+
+    const rowNode = api.getRowNode(rowId);
+    if (rowNode) {
+      rowNode.setData(newRow);
+    }
   } else {
-    console.error("API not available for active grid!");
+    const api =
+      gridType === "income" ? window.gridIncomeApi : window.gridExpensesApi;
+    api.applyTransaction({ add: [newRow] });
   }
 
-  modalCategory.value = "";
-  modalSum.value = "";
-  modalDate.value = "";
-
   modalMenu.style.display = "none";
-});
-
-deleteBtns.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    alert("delete");
-  });
+  modalMenu.dataset.editing = "false";
+  modalMenu.dataset.gridType = "";
+  modalMenu.dataset.rowId = "";
 });
 
 window.addEventListener("click", (event) => {
@@ -94,3 +111,65 @@ window.addEventListener("click", (event) => {
     modalMenu.style.display = "none";
   }
 });
+
+openModalEdit.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const parentGrid = btn.closest(".grid-wrapper");
+    const isIncome = parentGrid.querySelector("#incomeGrid") !== null;
+
+    const radioName = isIncome ? "incomeRowSelect" : "expensesRowSelect";
+    const selectedRadio = document.querySelector(
+      `input[name="${radioName}"]:checked`
+    );
+
+    if (!selectedRadio) {
+      alert("Выберите строку для редактирования");
+      return;
+    }
+
+    const rowId = selectedRadio.getAttribute("data-id");
+    const api = isIncome ? window.gridIncomeApi : window.gridExpensesApi;
+
+    const rowNode = api.getRowNode(rowId);
+    if (!rowNode) {
+      alert("Строка не найдена");
+      return;
+    }
+
+    modalCategory.value = rowNode.data.Категория;
+    modalSum.value = rowNode.data.Сумма;
+    modalDate.value = rowNode.data.Дата;
+
+    modalMenu.dataset.editing = "true";
+    modalMenu.dataset.gridType = isIncome ? "income" : "expenses";
+    modalMenu.dataset.rowId = rowId;
+    modalMenu.style.display = "flex";
+  });
+});
+
+deleteBtns.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const parentGrid = btn.closest(".grid-wrapper");
+    const isIncome = parentGrid.querySelector("#incomeGrid") !== null;
+
+    const radioName = isIncome ? "incomeRowSelect" : "expensesRowSelect";
+    const selectedRadio = document.querySelector(
+      `input[name="${radioName}"]:checked`
+    );
+
+    if (!selectedRadio) {
+      alert("Выберите строку для удаления");
+      return;
+    }
+
+    const rowId = selectedRadio.getAttribute("data-id");
+    const api = isIncome ? window.gridIncomeApi : window.gridExpensesApi;
+
+    const rowNode = api.getRowNode(rowId);
+    if (rowNode) {
+      api.applyTransaction({ remove: [rowNode.data] });
+    }
+  });
+});
+
+//test
