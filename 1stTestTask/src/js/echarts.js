@@ -1,29 +1,106 @@
 export function initChart() {
-  
-  var chart1 = echarts.init(document.getElementById("chart1"));
-  var chart2 = echarts.init(document.getElementById("chart2"));
+  const incomeChart = echarts.init(document.getElementById("chart1"));
+  const expensesChart = echarts.init(document.getElementById("chart2"));
 
-  var option = {
+  const incomeData = JSON.parse(localStorage.getItem("incomeData") || "[]");
+  const expensesData = JSON.parse(localStorage.getItem("expensesData") || "[]");
+
+  const incomeCategories = {};
+  const expensesByDate = {};
+
+  let totalIncome = 0;
+
+  incomeData.forEach((item) => {
+    const sum = parseFloat(item.Сумма);
+    const date = item.Дата;
+    if (!isNaN(sum)) {
+      totalIncome += sum;
+      const category = item.Категория || "Без категории";
+      incomeCategories[category] = (incomeCategories[category] || 0) + sum;
+    }
+  });
+
+  expensesData.forEach((item) => {
+    const sum = parseFloat(item.Сумма);
+    const date = item.Дата;
+    if (!isNaN(sum) && date) {
+      expensesByDate[date] = (expensesByDate[date] || 0) + sum;
+    }
+  });
+
+  const incomeSeriesData = Object.entries(incomeCategories).map(
+    ([name, value]) => ({ name, value })
+  );
+
+  const expenseDates = Object.keys(expensesByDate).sort();
+  const expenseValues = expenseDates.map((date) => expensesByDate[date]);
+
+  incomeChart.setOption({
     title: {
-      text: "Test",
+      text: `Всего\n${totalIncome} рублей`,
+      left: "center",
+      top: "middle",
+      textStyle: {
+        fontSize: 20,
+        // fontWeight: "bold",
+      },
     },
-    tooltip: {},
+    tooltip: {
+      trigger: "item",
+    },
     legend: {
-      data: ["sales"],
+      orient: "vertical",
+      right: 10,
+      top: "middle",
     },
-    xAxis: {
-      data: ["Shirts", "Cardigans", "Chiffons", "Pants", "Heels", "Socks"],
-    },
-    yAxis: {},
     series: [
       {
-        name: "sales",
+        name: "Доходы",
+        type: "pie",
+        radius: ["50%", "70%"],
+        avoidLabelOverlap: false,
+        label: {
+          show: false,
+          position: "center",
+        },
+        emphasis: {
+          label: {
+            show: false
+          }
+        },
+        labelLine: {
+          show: false,
+        },
+        data: incomeSeriesData,
+      }
+    ]
+    ,
+  });
+
+  expensesChart.setOption({
+    title: {
+      text: "Расходы по датам",
+      left: "center",
+    },
+    tooltip: {
+      trigger: "axis",
+    },
+    xAxis: {
+      type: "category",
+      data: expenseDates,
+    },
+    yAxis: {
+      type: "value",
+    },
+    series: [
+      {
+        data: expenseValues,
         type: "bar",
-        data: [5, 20, 36, 10, 10, 20],
+        name: "Сумма",
+        itemStyle: {
+          color: "#00bcd4",
+        },
       },
     ],
-  };
-
-  chart1.setOption(option);
-  chart2.setOption(option);
+  });
 }

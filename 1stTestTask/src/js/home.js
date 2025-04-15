@@ -17,7 +17,24 @@ const openModalEdit = document.querySelectorAll(".open-modal-edit");
 const deleteBtns = document.querySelectorAll(".delete-btn");
 
 let chartInitialized = false;
-let currentTargetGrid = null;
+let gridIncomeApi;
+let gridExpensesApi;
+
+function loadDataFromLocalStorage() {
+  const income = localStorage.getItem("incomeData");
+  const expenses = localStorage.getItem("expensesData");
+
+  if (income) {
+    gridIncomeData.splice(0, gridIncomeData.length, ...JSON.parse(income));
+  }
+  if (expenses) {
+    gridExpensesData.splice(
+      0,
+      gridExpensesData.length,
+      ...JSON.parse(expenses)
+    );
+  }
+}
 
 const {
   gridIncomeData,
@@ -26,17 +43,14 @@ const {
   gridExpensesOptions,
 } = initGrid();
 
-let gridIncomeApi;
-let gridExpensesApi;
+loadDataFromLocalStorage();
 
 gridIncomeOptions.onGridReady = (event) => {
   gridIncomeApi = event.api;
-  window.gridIncomeApi = gridIncomeApi;
 };
 
 gridExpensesOptions.onGridReady = (event) => {
   gridExpensesApi = event.api;
-  window.gridExpensesApi = gridExpensesApi;
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -47,15 +61,20 @@ document.addEventListener("DOMContentLoaded", () => {
   agGrid.createGrid(expensesGrid, gridExpensesOptions);
 });
 
+window.addEventListener("beforeunload", () => {
+  localStorage.setItem("incomeData", JSON.stringify(gridIncomeData));
+  localStorage.setItem("expensesData", JSON.stringify(gridExpensesData));
+});
+
 showChartsBtn.addEventListener("click", () => {
   tablesContainer.style.display = "none";
   chartsContainer.style.display = "flex";
 
   if (!chartInitialized) {
-    initChart();
+    initChart(gridIncomeData, gridExpensesData);
     chartInitialized = true;
   }
-});
+}); 
 
 showTablesBtn.addEventListener("click", () => {
   tablesContainer.style.display = "flex";
@@ -68,7 +87,8 @@ openModalAdd.forEach((btn) => {
 
     modalMenu.dataset.editing = "false";
 
-    modalMenu.dataset.gridType = btn.dataset.target === "grid1" ? "income" : "expenses";
+    modalMenu.dataset.gridType =
+      btn.dataset.target === "grid1" ? "income" : "expenses";
 
     modalCategory.value = "";
     modalSum.value = "";
@@ -84,20 +104,22 @@ modalSaveBtn.addEventListener("click", () => {
   };
 
   const gridType = modalMenu.dataset.gridType;
+  const api = gridType === "income" ? gridIncomeApi : gridExpensesApi;
+  const data = gridType === "income" ? gridIncomeData : gridExpensesData;
 
   if (modalMenu.dataset.editing === "true") {
-    const api =
-      gridType === "income" ? window.gridIncomeApi : window.gridExpensesApi;
     const rowId = modalMenu.dataset.rowId;
-
     const rowNode = api.getRowNode(rowId);
     if (rowNode) {
+      const oldData = rowNode.data;
       rowNode.setData(newRow);
+
+      const index = data.findIndex((item) => item === oldData);
+      if (index !== -1) data[index] = newRow;
     }
   } else {
-    const api =
-      gridType === "income" ? window.gridIncomeApi : window.gridExpensesApi;
     api.applyTransaction({ add: [newRow] });
+    data.push(newRow);
   }
 
   modalMenu.style.display = "none";
@@ -105,6 +127,7 @@ modalSaveBtn.addEventListener("click", () => {
   modalMenu.dataset.gridType = "";
   modalMenu.dataset.rowId = "";
 });
+
 
 window.addEventListener("click", (event) => {
   if (event.target === modalMenu) {
@@ -128,7 +151,7 @@ openModalEdit.forEach((btn) => {
     }
 
     const rowId = selectedRadio.getAttribute("data-id");
-    const api = isIncome ? window.gridIncomeApi : window.gridExpensesApi;
+    const api = isIncome ? gridIncomeApi : gridExpensesApi;
 
     const rowNode = api.getRowNode(rowId);
     if (!rowNode) {
@@ -163,13 +186,15 @@ deleteBtns.forEach((btn) => {
     }
 
     const rowId = selectedRadio.getAttribute("data-id");
-    const api = isIncome ? window.gridIncomeApi : window.gridExpensesApi;
+    const api = isIncome ? gridIncomeApi : gridExpensesApi;
+    const data = isIncome ? gridIncomeData : gridExpensesData;
 
     const rowNode = api.getRowNode(rowId);
     if (rowNode) {
       api.applyTransaction({ remove: [rowNode.data] });
+
+      const index = data.findIndex((item) => item === rowNode.data);
+      if (index !== -1) data.splice(index, 1);
     }
   });
 });
-
-//test

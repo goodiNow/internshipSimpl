@@ -19,7 +19,6 @@ export function initGrid() {
     columnDefs: [
       {
         width: 50,
-        field: "select",
         cellRenderer: (params) =>
           `<input type="radio" name="incomeRowSelect" data-id="${params.node.id}" />`,
       },
@@ -37,7 +36,6 @@ export function initGrid() {
     columnDefs: [
       {
         width: 50,
-        field: "select",
         cellRenderer: (params) =>
           `<input type="radio" name="expensesRowSelect" data-id="${params.node.id}" />`,
       },
