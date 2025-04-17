@@ -1,5 +1,5 @@
 import { initGrid } from "./aggrid.js";
-import { initChart } from "./echarts.js";
+import { initChart, updateChart, updateExpensesChart } from "./echarts.js";
 
 const showTablesBtn = document.getElementById("show-tables");
 const showChartsBtn = document.getElementById("show-charts");
@@ -71,10 +71,13 @@ showChartsBtn.addEventListener("click", () => {
   chartsContainer.style.display = "flex";
 
   if (!chartInitialized) {
-    initChart(gridIncomeData, gridExpensesData);
+    initChart();
     chartInitialized = true;
+  } else {
+    updateChart();
+    updateExpensesChart();
   }
-}); 
+});
 
 showTablesBtn.addEventListener("click", () => {
   tablesContainer.style.display = "flex";
@@ -99,7 +102,7 @@ openModalAdd.forEach((btn) => {
 modalSaveBtn.addEventListener("click", () => {
   const newRow = {
     Категория: modalCategory.value,
-    Сумма: modalSum.value,
+    Сумма: modalSum.value.replace(/\s/g, ""),
     Дата: modalDate.value,
   };
 
@@ -122,12 +125,24 @@ modalSaveBtn.addEventListener("click", () => {
     data.push(newRow);
   }
 
+  localStorage.setItem(
+    gridType === "income" ? "incomeData" : "expensesData",
+    JSON.stringify(data)
+  );
+
+  if (chartInitialized) {
+    if (gridType === "income") {
+      updateChart();
+    } else {
+      updateExpensesChart();
+    }
+  }
+
   modalMenu.style.display = "none";
   modalMenu.dataset.editing = "false";
   modalMenu.dataset.gridType = "";
   modalMenu.dataset.rowId = "";
 });
-
 
 window.addEventListener("click", (event) => {
   if (event.target === modalMenu) {
@@ -195,6 +210,15 @@ deleteBtns.forEach((btn) => {
 
       const index = data.findIndex((item) => item === rowNode.data);
       if (index !== -1) data.splice(index, 1);
+
+      localStorage.setItem(
+        isIncome ? "incomeData" : "expensesData",
+        JSON.stringify(data)
+      );
+
+      if (chartInitialized) {
+        isIncome ? updateChart() : updateExpensesChart();
+      }
     }
   });
 });

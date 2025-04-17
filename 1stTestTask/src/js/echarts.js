@@ -1,18 +1,23 @@
+let incomeChartInstance = null;
+let expensesChartInstance = null;
+
 export function initChart() {
-  const incomeChart = echarts.init(document.getElementById("chart1"));
-  const expensesChart = echarts.init(document.getElementById("chart2"));
+  incomeChartInstance = echarts.init(document.getElementById("chart1"));
+  expensesChartInstance = echarts.init(document.getElementById("chart2"));
+
+  updateChart();
+  updateExpensesChart();
+}
+
+export function updateChart() {
+  if (!incomeChartInstance) return;
 
   const incomeData = JSON.parse(localStorage.getItem("incomeData") || "[]");
-  const expensesData = JSON.parse(localStorage.getItem("expensesData") || "[]");
-
   const incomeCategories = {};
-  const expensesByDate = {};
-
   let totalIncome = 0;
 
   incomeData.forEach((item) => {
     const sum = parseFloat(item.Сумма);
-    const date = item.Дата;
     if (!isNaN(sum)) {
       totalIncome += sum;
       const category = item.Категория || "Без категории";
@@ -20,38 +25,26 @@ export function initChart() {
     }
   });
 
-  expensesData.forEach((item) => {
-    const sum = parseFloat(item.Сумма);
-    const date = item.Дата;
-    if (!isNaN(sum) && date) {
-      expensesByDate[date] = (expensesByDate[date] || 0) + sum;
-    }
-  });
-
   const incomeSeriesData = Object.entries(incomeCategories).map(
     ([name, value]) => ({ name, value })
   );
 
-  const expenseDates = Object.keys(expensesByDate).sort();
-  const expenseValues = expenseDates.map((date) => expensesByDate[date]);
-
-  incomeChart.setOption({
+  incomeChartInstance.setOption({
     title: {
       text: `Всего\n${totalIncome} рублей`,
       left: "center",
       top: "middle",
       textStyle: {
         fontSize: 20,
-        // fontWeight: "bold",
       },
     },
     tooltip: {
       trigger: "item",
     },
     legend: {
-      orient: "vertical",
-      right: 10,
-      top: "middle",
+      orient: "horizontal",
+      bottom: 0,
+      left: "center",
     },
     series: [
       {
@@ -65,19 +58,36 @@ export function initChart() {
         },
         emphasis: {
           label: {
-            show: false
-          }
+            show: false,
+          },
         },
         labelLine: {
           show: false,
         },
         data: incomeSeriesData,
-      }
-    ]
-    ,
+      },
+    ],
+  });
+}
+
+export function updateExpensesChart() {
+  if (!expensesChartInstance) return;
+
+  const expensesData = JSON.parse(localStorage.getItem("expensesData") || "[]");
+  const expensesByDate = {};
+
+  expensesData.forEach((item) => {
+    const sum = parseFloat(item.Сумма);
+    const date = item.Дата;
+    if (!isNaN(sum) && date) {
+      expensesByDate[date] = (expensesByDate[date] || 0) + sum;
+    }
   });
 
-  expensesChart.setOption({
+  const expenseDates = Object.keys(expensesByDate).sort();
+  const expenseValues = expenseDates.map((date) => expensesByDate[date]);
+
+  expensesChartInstance.setOption({
     title: {
       text: "Расходы по датам",
       left: "center",
