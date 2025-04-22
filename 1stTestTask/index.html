@@ -43,7 +43,11 @@
             />
           </div>
         </div>
-        <div id="incomeGrid" class="ag-theme-alpine" style="height: 400px; width: 500px"></div>
+        <div
+          id="incomeGrid"
+          class="ag-theme-alpine"
+          style="height: 400px; width: 500px"
+        ></div>
       </div>
 
       <div class="grid-wrapper">
@@ -68,14 +72,38 @@
             />
           </div>
         </div>
-        <div id="expensesGrid" class="ag-theme-alpine" style="height: 400px; width: 500px"></div>
+        <div
+          id="expensesGrid"
+          class="ag-theme-alpine"
+          style="height: 400px; width: 500px"
+        ></div>
       </div>
     </div>
 
-    <div class="charts-container" style="display: none; height: 400px">
-      <div id="chart1" style="height: 400px; width: 500px"></div>
-      <div id="chart2" style="height: 400px; width: 500px"></div>
+    <div class="charts-container">
+      <div class="chart-wrapper">
+        <div id="chart1" style="width: 400px; height: 400px;"></div>
+        <div class="chart-filter">
+          <label>Доходы с:</label>
+          <input type="date" id="income-start">
+          <label>по:</label>
+          <input type="date" id="income-end">
+          <button id="apply-income-filter" class="btn btn-primary">Применить</button>
+        </div>
+      </div>
+    
+      <div class="chart-wrapper">
+        <div id="chart2" style="width: 600px; height: 400px;"></div>
+        <div class="chart-filter">
+          <label>Расходы с:</label>
+          <input type="date" id="expenses-start">
+          <label>по:</label>
+          <input type="date" id="expenses-end">
+          <button id="apply-expenses-filter" class="btn btn-primary">Применить</button>
+        </div>
+      </div>
     </div>
+    
 
     <div id="modal-menu" class="modal-menu">
       <div class="modal-content">

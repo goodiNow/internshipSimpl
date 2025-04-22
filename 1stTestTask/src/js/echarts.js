@@ -9,38 +9,47 @@ export function initChart() {
   updateExpensesChart();
 }
 
-export function updateChart() {
+const parseDate = (str) => new Date(str);
+const parseSum = (str) => parseFloat((str || "0").replace(/\s+/g, ""));
+const isInRange = (date, start, end) => {
+  const d = parseDate(date);
+  return (!start || d >= start) && (!end || d <= end);
+};
+
+export function updateChart(startDateStr, endDateStr) {
   if (!incomeChartInstance) return;
 
-  const incomeData = JSON.parse(localStorage.getItem("incomeData") || "[]");
-  const incomeCategories = {};
-  let totalIncome = 0;
+  const data = JSON.parse(localStorage.getItem("incomeData") || "[]");
+  const start = startDateStr ? parseDate(startDateStr) : null;
+  const end = endDateStr ? parseDate(endDateStr) : null;
 
-  incomeData.forEach((item) => {
-    const sum = parseFloat(item.Сумма);
-    if (!isNaN(sum)) {
-      totalIncome += sum;
-      const category = item.Категория || "Без категории";
-      incomeCategories[category] = (incomeCategories[category] || 0) + sum;
+  let total = 0;
+  const byCategory = {};
+
+  data.forEach(({ Сумма, Дата, Категория }) => {
+    if (isInRange(Дата, start, end)) {
+      const sum = parseSum(Сумма);
+      if (!isNaN(sum)) {
+        total += sum;
+        const cat = Категория || "Без категории";
+        byCategory[cat] = (byCategory[cat] || 0) + sum;
+      }
     }
   });
 
-  const incomeSeriesData = Object.entries(incomeCategories).map(
-    ([name, value]) => ({ name, value })
-  );
+  const chartData = Object.entries(byCategory).map(([name, value]) => ({
+    name,
+    value,
+  }));
 
   incomeChartInstance.setOption({
     title: {
-      text: `Всего\n${totalIncome} рублей`,
+      text: `Всего\n${total} рублей`,
       left: "center",
       top: "middle",
-      textStyle: {
-        fontSize: 20,
-      },
+      textStyle: { fontSize: 20 },
     },
-    tooltip: {
-      trigger: "item",
-    },
+    tooltip: { trigger: "item" },
     legend: {
       orient: "horizontal",
       bottom: 0,
@@ -52,64 +61,46 @@ export function updateChart() {
         type: "pie",
         radius: ["50%", "70%"],
         avoidLabelOverlap: false,
-        label: {
-          show: false,
-          position: "center",
-        },
-        emphasis: {
-          label: {
-            show: false,
-          },
-        },
-        labelLine: {
-          show: false,
-        },
-        data: incomeSeriesData,
+        label: { show: false },
+        emphasis: { label: { show: false } },
+        labelLine: { show: false },
+        data: chartData,
       },
     ],
   });
 }
 
-export function updateExpensesChart() {
+export function updateExpensesChart(startDateStr, endDateStr) {
   if (!expensesChartInstance) return;
 
-  const expensesData = JSON.parse(localStorage.getItem("expensesData") || "[]");
-  const expensesByDate = {};
+  const data = JSON.parse(localStorage.getItem("expensesData") || "[]");
+  const start = startDateStr ? parseDate(startDateStr) : null;
+  const end = endDateStr ? parseDate(endDateStr) : null;
 
-  expensesData.forEach((item) => {
-    const sum = parseFloat(item.Сумма);
-    const date = item.Дата;
-    if (!isNaN(sum) && date) {
-      expensesByDate[date] = (expensesByDate[date] || 0) + sum;
+  const grouped = {};
+
+  data.forEach(({ Сумма, Дата }) => {
+    if (Дата && isInRange(Дата, start, end)) {
+      const sum = parseSum(Сумма);
+      if (!isNaN(sum)) {
+        grouped[Дата] = (grouped[Дата] || 0) + sum;
+      }
     }
   });
 
-  const expenseDates = Object.keys(expensesByDate).sort();
-  const expenseValues = expenseDates.map((date) => expensesByDate[date]);
+  const dates = Object.keys(grouped).sort();
+  const values = dates.map((date) => grouped[date]);
 
   expensesChartInstance.setOption({
-    title: {
-      text: "Расходы по датам",
-      left: "center",
-    },
-    tooltip: {
-      trigger: "axis",
-    },
-    xAxis: {
-      type: "category",
-      data: expenseDates,
-    },
-    yAxis: {
-      type: "value",
-    },
+    tooltip: { trigger: "axis" },
+    xAxis: { type: "category", data: dates },
+    yAxis: { type: "value" },
     series: [
       {
-        data: expenseValues,
-        type: "bar",
         name: "Сумма",
-        itemStyle: {
-          color: "#00bcd4",
-        },
+        type: "bar",
+        data: values,
+        itemStyle: { color: "#00bcd4" },
       },
     ],
   });
