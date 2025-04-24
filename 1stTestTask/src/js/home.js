@@ -1,25 +1,6 @@
 import { initGrid } from "./aggrid.js";
 import { initChart, updateChart, updateExpensesChart } from "./echarts.js";
 
-const tablesContainer = document.querySelector(".tables-container");
-const chartsContainer = document.querySelector(".charts-container");
-const modalMenu = document.getElementById("modal-menu");
-const modalCategory = document.getElementById("modal-category");
-const modalSum = document.getElementById("modal-sum");
-const modalDate = document.getElementById("modal-date");
-const modalSaveBtn = document.getElementById("modal-save-btn");
-
-const showTablesBtn = document.getElementById("show-tables");
-const showChartsBtn = document.getElementById("show-charts");
-const openModalAdd = document.querySelectorAll(".open-modal-add");
-const openModalEdit = document.querySelectorAll(".open-modal-edit");
-const deleteBtns = document.querySelectorAll(".delete-btn");
-const applyIncomeFilter = document.getElementById("apply-income-filter");
-const applyExpensesFilter = document.getElementById("apply-expenses-filter");
-
-let chartInitialized = false;
-let gridIncomeApi, gridExpensesApi;
-
 const {
   gridIncomeData,
   gridExpensesData,
@@ -27,32 +8,61 @@ const {
   gridExpensesOptions,
 } = initGrid();
 
-function loadDataFromLocalStorage() {
-  const income = JSON.parse(localStorage.getItem("incomeData") || "[]");
-  const expenses = JSON.parse(localStorage.getItem("expensesData") || "[]");
+let gridIncomeApi = null;
+let gridExpensesApi = null;
+let chartInitialized = false;
 
-  gridIncomeData.splice(0, gridIncomeData.length, ...income);
-  gridExpensesData.splice(0, gridExpensesData.length, ...expenses);
+const tablesContainer = document.querySelector(".tables-container");
+const chartsContainer = document.querySelector(".charts-container");
+const incomeStartInput = document.getElementById("income-start");
+const incomeEndInput = document.getElementById("income-end");
+const expensesStartInput = document.getElementById("expenses-start");
+const expensesEndInput = document.getElementById("expenses-end");
+
+const modalElement = document.getElementById("dataModal");
+const dataModal = new bootstrap.Modal(modalElement);
+const modalCategory = document.getElementById("modal-category");
+const modalSum = document.getElementById("modal-sum");
+const modalDate = document.getElementById("modal-date");
+
+const modalState = {
+  editing: false,
+  gridType: "",
+  rowId: null,
+};
+
+function loadData() {
+  const inc = JSON.parse(localStorage.getItem("incomeData") || "[]");
+  const exp = JSON.parse(localStorage.getItem("expensesData") || "[]");
+  gridIncomeData.splice(0, gridIncomeData.length, ...inc);
+  gridExpensesData.splice(0, gridExpensesData.length, ...exp);
 }
 
-loadDataFromLocalStorage();
-
-gridIncomeOptions.onGridReady = (e) => (gridIncomeApi = e.api);
-gridExpensesOptions.onGridReady = (e) => (gridExpensesApi = e.api);
-
-document.addEventListener("DOMContentLoaded", () => {
-  agGrid.createGrid(document.querySelector("#incomeGrid"), gridIncomeOptions);
-  agGrid.createGrid(document.querySelector("#expensesGrid"), gridExpensesOptions);
-});
-
-window.addEventListener("beforeunload", () => {
+function saveData() {
   localStorage.setItem("incomeData", JSON.stringify(gridIncomeData));
   localStorage.setItem("expensesData", JSON.stringify(gridExpensesData));
-});
+}
 
-showChartsBtn.addEventListener("click", () => {
+function initGrids() {
+  agGrid.createGrid(document.querySelector("#incomeGrid"), gridIncomeOptions);
+  agGrid.createGrid(
+    document.querySelector("#expensesGrid"),
+    gridExpensesOptions
+  );
+
+  gridIncomeOptions.onGridReady = (e) => (gridIncomeApi = e.api);
+  gridExpensesOptions.onGridReady = (e) => (gridExpensesApi = e.api);
+}
+
+function showTables() {
+  tablesContainer.style.display = "flex";
+  chartsContainer.style.display = "none";
+}
+
+function showCharts() {
   tablesContainer.style.display = "none";
   chartsContainer.style.display = "flex";
+
   if (!chartInitialized) {
     initChart();
     chartInitialized = true;
@@ -60,41 +70,57 @@ showChartsBtn.addEventListener("click", () => {
     updateChart();
     updateExpensesChart();
   }
-});
+}
 
-showTablesBtn.addEventListener("click", () => {
-  tablesContainer.style.display = "flex";
-  chartsContainer.style.display = "none";
-});
+function openAddModal(btn) {
+  modalState.editing = false;
+  modalState.gridType = btn.dataset.target === "grid1" ? "income" : "expenses";
+  modalCategory.value = "";
+  modalSum.value = "";
+  modalDate.value = "";
+  dataModal.show();
+}
 
-openModalAdd.forEach((btn) =>
-  btn.addEventListener("click", () => {
-    modalMenu.dataset.editing = "false";
-    modalMenu.dataset.gridType = btn.dataset.target === "grid1" ? "income" : "expenses";
-    [modalCategory.value, modalSum.value, modalDate.value] = ["", "", ""];
-    modalMenu.style.display = "flex";
-  })
-);
+function openEditModal(btn) {
+  const parent = btn.closest(".grid-wrapper");
+  const isIncome = !!parent.querySelector("#incomeGrid");
+  const gridType = isIncome ? "income" : "expenses";
+  const api = isIncome ? gridIncomeApi : gridExpensesApi;
 
-modalSaveBtn.addEventListener("click", () => {
-  const gridType = modalMenu.dataset.gridType;
-  const isEdit = modalMenu.dataset.editing === "true";
+  const sel = document.querySelector(
+    `input[name="${gridType}RowSelect"]:checked`
+  );
+  if (!sel) return alert("Выберите строку для редактирования");
+
+  const rowNode = api.getRowNode(sel.dataset.id);
+  if (!rowNode) return alert("Строка не найдена");
+
+  modalState.editing = true;
+  modalState.gridType = gridType;
+  modalState.rowId = sel.dataset.id;
+
+  modalCategory.value = rowNode.data.category;
+  modalSum.value = rowNode.data.sum;
+  modalDate.value = rowNode.data.date;
+  dataModal.show();
+}
+
+function saveModal() {
+  const { editing, gridType, rowId } = modalState;
   const api = gridType === "income" ? gridIncomeApi : gridExpensesApi;
   const data = gridType === "income" ? gridIncomeData : gridExpensesData;
 
   const newRow = {
-    Категория: modalCategory.value,
-    Сумма: modalSum.value.replace(/\s/g, ""),
-    Дата: modalDate.value,
+    category: modalCategory.value,
+    sum: modalSum.value.replace(/\s/g, ""),
+    date: modalDate.value,
   };
 
-  if (isEdit) {
-    const rowNode = api.getRowNode(modalMenu.dataset.rowId);
-    if (rowNode) {
-      const index = data.findIndex((item) => item === rowNode.data);
-      rowNode.setData(newRow);
-      if (index !== -1) data[index] = newRow;
-    }
+  if (editing) {
+    const rowNode = api.getRowNode(rowId);
+    const idx = data.findIndex((d) => d === rowNode.data);
+    rowNode.setData(newRow);
+    if (idx >= 0) data[idx] = newRow;
   } else {
     api.applyTransaction({ add: [newRow] });
     data.push(newRow);
@@ -104,80 +130,62 @@ modalSaveBtn.addEventListener("click", () => {
   if (chartInitialized) {
     gridType === "income" ? updateChart() : updateExpensesChart();
   }
-
-  closeModal();
-});
-
-openModalEdit.forEach((btn) =>
-  btn.addEventListener("click", () => {
-    const parentGrid = btn.closest(".grid-wrapper");
-    const isIncome = parentGrid.querySelector("#incomeGrid") !== null;
-    const gridType = isIncome ? "income" : "expenses";
-    const api = isIncome ? gridIncomeApi : gridExpensesApi;
-
-    const selected = document.querySelector(`input[name="${gridType}RowSelect"]:checked`);
-    if (!selected) return alert("Выберите строку для редактирования");
-
-    const rowNode = api.getRowNode(selected.dataset.id);
-    if (!rowNode) return alert("Строка не найдена");
-
-    modalMenu.dataset.editing = "true";
-    modalMenu.dataset.gridType = gridType;
-    modalMenu.dataset.rowId = selected.dataset.id;
-
-    modalCategory.value = rowNode.data.Категория;
-    modalSum.value = rowNode.data.Сумма;
-    modalDate.value = rowNode.data.Дата;
-    modalMenu.style.display = "flex";
-  })
-);
-
-deleteBtns.forEach((btn) =>
-  btn.addEventListener("click", () => {
-    const parentGrid = btn.closest(".grid-wrapper");
-    const isIncome = parentGrid.querySelector("#incomeGrid") !== null;
-    const gridType = isIncome ? "income" : "expenses";
-    const api = isIncome ? gridIncomeApi : gridExpensesApi;
-    const data = isIncome ? gridIncomeData : gridExpensesData;
-
-    const selected = document.querySelector(`input[name="${gridType}RowSelect"]:checked`);
-    if (!selected) return alert("Выберите строку для удаления");
-
-    const rowNode = api.getRowNode(selected.dataset.id);
-    if (rowNode) {
-      api.applyTransaction({ remove: [rowNode.data] });
-      const index = data.findIndex((item) => item === rowNode.data);
-      if (index !== -1) data.splice(index, 1);
-
-      localStorage.setItem(`${gridType}Data`, JSON.stringify(data));
-      if (chartInitialized) {
-        isIncome ? updateChart() : updateExpensesChart();
-      }
-    }
-  })
-);
-
-window.addEventListener("click", (e) => {
-  if (e.target === modalMenu) closeModal();
-});
-
-function closeModal() {
-  modalMenu.style.display = "none";
-  modalMenu.dataset.editing = "false";
-  modalMenu.dataset.gridType = "";
-  modalMenu.dataset.rowId = "";
+  dataModal.hide();
 }
 
-applyIncomeFilter.addEventListener("click", () => {
-  updateChart(
-    document.getElementById("income-start").value,
-    document.getElementById("income-end").value
+function deleteRow(btn) {
+  const parent = btn.closest(".grid-wrapper");
+  const isIncome = !!parent.querySelector("#incomeGrid");
+  const gridType = isIncome ? "income" : "expenses";
+  const api = isIncome ? gridIncomeApi : gridExpensesApi;
+  const data = isIncome ? gridIncomeData : gridExpensesData;
+
+  const sel = document.querySelector(
+    `input[name="${gridType}RowSelect"]:checked`
   );
+  if (!sel) return alert("Выберите строку для удаления");
+
+  const rowNode = api.getRowNode(sel.dataset.id);
+  api.applyTransaction({ remove: [rowNode.data] });
+
+  const idx = data.findIndex((d) => d === rowNode.data);
+  if (idx >= 0) data.splice(idx, 1);
+
+  localStorage.setItem(`${gridType}Data`, JSON.stringify(data));
+  if (chartInitialized) {
+    isIncome ? updateChart() : updateExpensesChart();
+  }
+}
+
+function showDatePicker(input) {
+  if (typeof input.showPicker === "function") {
+    input.showPicker();
+  } else {
+    input.focus();
+  }
+}
+
+function applyIncomeFilter() {
+  updateChart(incomeStartInput.value, incomeEndInput.value);
+}
+
+function applyExpensesFilter() {
+  updateExpensesChart(expensesStartInput.value, expensesEndInput.value);
+}
+
+window.showTables = showTables;
+window.showCharts = showCharts;
+window.openAddModal = openAddModal;
+window.openEditModal = openEditModal;
+window.saveModal = saveModal;
+window.deleteRow = deleteRow;
+window.showDatePicker = showDatePicker;
+window.applyIncomeFilter = applyIncomeFilter;
+window.applyExpensesFilter = applyExpensesFilter;
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadData();
+  initGrids();
 });
 
-applyExpensesFilter.addEventListener("click", () => {
-  updateExpensesChart(
-    document.getElementById("expenses-start").value,
-    document.getElementById("expenses-end").value
-  );
-});
+window.addEventListener("beforeunload", saveData);

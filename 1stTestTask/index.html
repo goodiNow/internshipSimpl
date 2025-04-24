@@ -11,115 +11,244 @@
     <link rel="stylesheet" href="src/styles/main.css" />
   </head>
   <body>
-    <header class="page-header d-flex">
-      <button type="button" class="btn btn-primary" id="show-tables">
-        Таблицы
-      </button>
-      <button type="button" class="btn btn-primary" id="show-charts">
-        Графики
-      </button>
+    <header class="page-header d-flex justify-content-center gap-3 py-3">
+      <button class="btn btn-primary" onclick="showTables()">Таблицы</button>
+      <button class="btn btn-primary" onclick="showCharts()">Графики</button>
     </header>
 
-    <div class="tables-container">
-      <div class="grid-wrapper">
-        <div class="header-container">
-          <div class="table-title fs-5 text fw-bold">Доходы</div>
-          <div class="button-container">
+    <main>
+      <section
+        id="tables-section"
+        class="tables-container"
+        aria-labelledby="tables-heading"
+      >
+        <h1 id="tables-heading" class="visually-hidden">
+          Таблицы доходов и расходов
+        </h1>
+
+        <section
+          id="income-section"
+          class="grid-wrapper"
+          aria-labelledby="income-heading"
+        >
+          <header
+            id="income-heading"
+            class="header-container d-flex justify-content-between align-items-center mb-2"
+          >
+            <h2 class="fs-5 fw-bold">Доходы</h2>
+            <div
+              role="group"
+              aria-label="Действия с доходами"
+              class="button-container"
+            >
+              <button
+                type="button"
+                class="btn btn-success open-modal-add"
+                data-target="grid1"
+                onclick="openAddModal(this)"
+              >
+                Добавить
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary open-modal-edit"
+                onclick="openEditModal(this)"
+              >
+                Изменить
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger delete-btn"
+                onclick="deleteRow(this)"
+              >
+                Удалить
+              </button>
+            </div>
+          </header>
+          <div
+            id="incomeGrid"
+            class="ag-theme-alpine"
+            role="grid"
+            aria-describedby="income-heading"
+            style="height: 400px; width: 500px"
+          ></div>
+        </section>
+
+        <section
+          id="expenses-section"
+          class="grid-wrapper"
+          aria-labelledby="expenses-heading"
+        >
+          <header
+            id="expenses-heading"
+            class="header-container d-flex justify-content-between align-items-center mb-2"
+          >
+            <h2 class="fs-5 fw-bold">Расходы</h2>
+            <div
+              role="group"
+              aria-label="Действия с расходами"
+              class="button-container"
+            >
+              <button
+                type="button"
+                class="btn btn-success open-modal-add"
+                data-target="grid2"
+                onclick="openAddModal(this)"
+              >
+                Добавить
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary open-modal-edit"
+                onclick="openEditModal(this)"
+              >
+                Изменить
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger delete-btn"
+                onclick="deleteRow(this)"
+              >
+                Удалить
+              </button>
+            </div>
+          </header>
+          <div
+            id="expensesGrid"
+            class="ag-theme-alpine"
+            role="grid"
+            aria-describedby="expenses-heading"
+            style="height: 400px; width: 500px"
+          ></div>
+        </section>
+      </section>
+
+      <section
+        id="charts-section"
+        class="charts-container"
+        aria-labelledby="charts-heading"
+      >
+        <h2 id="charts-heading" class="visually-hidden">Графики</h2>
+
+        <figure class="chart-wrapper" aria-labelledby="charts-heading">
+          <div id="chart1" style="width: 400px; height: 400px"></div>
+          <figcaption class="chart-filter">
+            <label for="income-start">Доходы с:</label>
             <input
-              class="btn btn-success open-modal-add"
-              type="button"
-              value="Добавить"
-              data-target="grid1"
+              type="date"
+              id="income-start"
+              onclick="showDatePicker(this)"
             />
+            <label for="income-end">по:</label>
+            <input type="date" id="income-end" onclick="showDatePicker(this)" />
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="applyIncomeFilter()"
+            >
+              Применить
+            </button>
+          </figcaption>
+        </figure>
+
+        <figure class="chart-wrapper" aria-labelledby="charts-heading">
+          <div id="chart2" style="width: 600px; height: 400px"></div>
+          <figcaption class="chart-filter">
+            <label for="expenses-start">Расходы с:</label>
             <input
-              class="btn btn-secondary open-modal-edit"
-              type="button"
-              value="Изменить"
+              type="date"
+              id="expenses-start"
+              onclick="showDatePicker(this)"
             />
+            <label for="expenses-end">по:</label>
             <input
-              class="btn btn-danger delete-btn"
-              type="button"
-              value="Удалить"
+              type="date"
+              id="expenses-end"
+              onclick="showDatePicker(this)"
             />
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="applyExpensesFilter()"
+            >
+              Применить
+            </button>
+          </figcaption>
+        </figure>
+      </section>
+    </main>
+
+    <div
+      class="modal fade"
+      id="dataModal"
+      tabindex="-1"
+      aria-labelledby="dataModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content p-3 rounded-3 shadow-sm">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold" id="dataModalLabel">
+              Добавить информацию
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Закрыть"
+            ></button>
           </div>
-        </div>
-        <div
-          id="incomeGrid"
-          class="ag-theme-alpine"
-          style="height: 400px; width: 500px"
-        ></div>
-      </div>
-
-      <div class="grid-wrapper">
-        <div class="header-container">
-          <div class="table-title fs-5 text fw-bold">Расходы</div>
-          <div class="button-container">
-            <input
-              class="btn btn-success open-modal-add"
-              type="button"
-              value="Добавить"
-              data-target="grid2"
-            />
-            <input
-              class="btn btn-secondary open-modal-edit"
-              type="button"
-              value="Изменить"
-            />
-            <input
-              class="btn btn-danger delete-btn"
-              type="button"
-              value="Удалить"
-            />
+          <div class="modal-body pt-2">
+            <form id="modal-form">
+              <div class="mb-3">
+                <label for="modal-category" class="form-label">Категория</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="modal-category"
+                  placeholder="Категория"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="modal-sum" class="form-label">Сумма</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="modal-sum"
+                  placeholder="Сумма"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="modal-date" class="form-label">Дата</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="modal-date"
+                  onclick="showDatePicker(this)"
+                  required
+                />
+              </div>
+            </form>
           </div>
-        </div>
-        <div
-          id="expensesGrid"
-          class="ag-theme-alpine"
-          style="height: 400px; width: 500px"
-        ></div>
-      </div>
-    </div>
-
-    <div class="charts-container">
-      <div class="chart-wrapper">
-        <div id="chart1" style="width: 400px; height: 400px;"></div>
-        <div class="chart-filter">
-          <label>Доходы с:</label>
-          <input type="date" id="income-start">
-          <label>по:</label>
-          <input type="date" id="income-end">
-          <button id="apply-income-filter" class="btn btn-primary">Применить</button>
-        </div>
-      </div>
-    
-      <div class="chart-wrapper">
-        <div id="chart2" style="width: 600px; height: 400px;"></div>
-        <div class="chart-filter">
-          <label>Расходы с:</label>
-          <input type="date" id="expenses-start">
-          <label>по:</label>
-          <input type="date" id="expenses-end">
-          <button id="apply-expenses-filter" class="btn btn-primary">Применить</button>
-        </div>
-      </div>
-    </div>
-    
-
-    <div id="modal-menu" class="modal-menu">
-      <div class="modal-content">
-        <div class="modal-title fs-6 text fw-bold" style="padding-bottom: 20px">
-          Добавить информацию
-        </div>
-        <div class="modal-input-container">
-          <input
-            type="text"
-            name="category"
-            id="modal-category"
-            placeholder="Категория"
-          />
-          <input type="text" name="sum" id="modal-sum" placeholder="Сумма" />
-          <input type="text" name="date" id="modal-date" placeholder="Дата" />
-          <button id="modal-save-btn" class="btn btn-success">Сохранить</button>
+          <div class="modal-footer border-0 pt-0">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="modal-save-btn"
+              onclick="saveModal()"
+            >
+              Сохранить
+            </button>
+          </div>
         </div>
       </div>
     </div>

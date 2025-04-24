@@ -4,40 +4,38 @@ let expensesChartInstance = null;
 export function initChart() {
   incomeChartInstance = echarts.init(document.getElementById("chart1"));
   expensesChartInstance = echarts.init(document.getElementById("chart2"));
-
   updateChart();
   updateExpensesChart();
 }
 
-const parseDate = (str) => new Date(str);
-const parseSum = (str) => parseFloat((str || "0").replace(/\s+/g, ""));
-const isInRange = (date, start, end) => {
-  const d = parseDate(date);
-  return (!start || d >= start) && (!end || d <= end);
+const parseDate = (s) => new Date(s);
+const parseNumber = (s) => parseFloat((s || "0").replace(/\s+/g, ""));
+const filterByDate = (data, start, end) => {
+  const s = start ? parseDate(start) : null;
+  const e = end ? parseDate(end) : null;
+  return data.filter(({ date }) => {
+    const d = parseDate(date);
+    return (!s || d >= s) && (!e || d <= e);
+  });
 };
 
-export function updateChart(startDateStr, endDateStr) {
+export function updateChart(start, end) {
   if (!incomeChartInstance) return;
-
-  const data = JSON.parse(localStorage.getItem("incomeData") || "[]");
-  const start = startDateStr ? parseDate(startDateStr) : null;
-  const end = endDateStr ? parseDate(endDateStr) : null;
-
+  const raw = JSON.parse(localStorage.getItem("incomeData") || "[]");
+  const rows = filterByDate(raw, start, end);
   let total = 0;
-  const byCategory = {};
+  const byCat = {};
 
-  data.forEach(({ Сумма, Дата, Категория }) => {
-    if (isInRange(Дата, start, end)) {
-      const sum = parseSum(Сумма);
-      if (!isNaN(sum)) {
-        total += sum;
-        const cat = Категория || "Без категории";
-        byCategory[cat] = (byCategory[cat] || 0) + sum;
-      }
+  rows.forEach(({ sum, category }) => {
+    const v = parseNumber(sum);
+    if (!isNaN(v)) {
+      total += v;
+      const key = category || "Без категории";
+      byCat[key] = (byCat[key] || 0) + v;
     }
   });
 
-  const chartData = Object.entries(byCategory).map(([name, value]) => ({
+  const seriesData = Object.entries(byCat).map(([name, value]) => ({
     name,
     value,
   }));
@@ -49,7 +47,10 @@ export function updateChart(startDateStr, endDateStr) {
       top: "middle",
       textStyle: { fontSize: 20 },
     },
-    tooltip: { trigger: "item" },
+    tooltip: {
+      trigger: "item",
+      formatter: "{b}: {d}%",
+    },
     legend: {
       orient: "horizontal",
       bottom: 0,
@@ -64,43 +65,71 @@ export function updateChart(startDateStr, endDateStr) {
         label: { show: false },
         emphasis: { label: { show: false } },
         labelLine: { show: false },
-        data: chartData,
+        data: seriesData,
       },
     ],
   });
 }
 
-export function updateExpensesChart(startDateStr, endDateStr) {
+export function updateExpensesChart(start, end) {
   if (!expensesChartInstance) return;
+  const incRaw = JSON.parse(localStorage.getItem("incomeData") || "[]");
+  const expRaw = JSON.parse(localStorage.getItem("expensesData") || "[]");
+  const incRows = filterByDate(incRaw, start, end);
+  const expRows = filterByDate(expRaw, start, end);
 
-  const data = JSON.parse(localStorage.getItem("expensesData") || "[]");
-  const start = startDateStr ? parseDate(startDateStr) : null;
-  const end = endDateStr ? parseDate(endDateStr) : null;
+  const incMap = {};
+  const expMap = {};
 
-  const grouped = {};
-
-  data.forEach(({ Сумма, Дата }) => {
-    if (Дата && isInRange(Дата, start, end)) {
-      const sum = parseSum(Сумма);
-      if (!isNaN(sum)) {
-        grouped[Дата] = (grouped[Дата] || 0) + sum;
-      }
-    }
+  incRows.forEach(({ sum, date }) => {
+    const v = parseNumber(sum);
+    if (!isNaN(v)) incMap[date] = (incMap[date] || 0) + v;
   });
 
-  const dates = Object.keys(grouped).sort();
-  const values = dates.map((date) => grouped[date]);
+  expRows.forEach(({ sum, date }) => {
+    const v = parseNumber(sum);
+    if (!isNaN(v)) expMap[date] = (expMap[date] || 0) + v;
+  });
+
+  const allDates = Array.from(
+    new Set([...Object.keys(incMap), ...Object.keys(expMap)])
+  ).sort((a, b) => parseDate(a) - parseDate(b));
+
+  const incValues = allDates.map((d) => incMap[d] || 0);
+  const expValues = allDates.map((d) => expMap[d] || 0);
 
   expensesChartInstance.setOption({
-    tooltip: { trigger: "axis" },
-    xAxis: { type: "category", data: dates },
-    yAxis: { type: "value" },
+    title: {
+      text: "Доходы и расходы по датам",
+      left: "center",
+    },
+    tooltip: {
+      trigger: "axis",
+    },
+    legend: {
+      data: ["Доходы", "Расходы"],
+      bottom: 0,
+      left: "center",
+    },
+    xAxis: {
+      type: "category",
+      data: allDates,
+    },
+    yAxis: {
+      type: "value",
+    },
     series: [
       {
-        name: "Сумма",
+        name: "Доходы",
         type: "bar",
-        data: values,
-        itemStyle: { color: "#00bcd4" },
+        data: incValues,
+        itemStyle: { color: "#5470C6" },
+      },
+      {
+        name: "Расходы",
+        type: "bar",
+        data: expValues,
+        itemStyle: { color: "#91CC75" },
       },
     ],
   });
