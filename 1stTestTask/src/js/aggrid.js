@@ -5,16 +5,16 @@ export function initGrid() {
   function formatDate(value) {
     if (!value) return "";
     const d = new Date(value);
-    const day   = String(d.getDate()).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year  = d.getFullYear();
+    const year = d.getFullYear();
     return `${day}.${month}.${year}`;
   }
 
   function createRadioColumn(radioName) {
     return {
       width: 50,
-      cellRenderer: params =>
+      cellRenderer: (params) =>
         `<input type="radio" name="${radioName}" data-id="${params.node.id}" />`,
     };
   }
@@ -23,11 +23,11 @@ export function initGrid() {
     return [
       createRadioColumn(radioName),
       { headerName: "Категория", field: "category" },
-      { headerName: "Сумма",      field: "sum"      },
+      { headerName: "Сумма", field: "sum" },
       {
         headerName: "Дата",
-        field:      "date",
-        valueFormatter: params => formatDate(params.value),
+        field: "date",
+        valueFormatter: (params) => formatDate(params.value),
       },
     ];
   }
@@ -40,8 +40,14 @@ export function initGrid() {
     };
   }
 
-  const gridIncomeOptions   = createGridOptions(gridIncomeData,   "incomeRowSelect");
-  const gridExpensesOptions = createGridOptions(gridExpensesData, "expensesRowSelect");
+  const gridIncomeOptions = createGridOptions(
+    gridIncomeData,
+    "incomeRowSelect"
+  );
+  const gridExpensesOptions = createGridOptions(
+    gridExpensesData,
+    "expensesRowSelect"
+  );
 
   return {
     gridIncomeData,

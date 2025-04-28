@@ -44,14 +44,14 @@ function saveData() {
 }
 
 function initGrids() {
+  gridIncomeOptions.onGridReady = (e) => (gridIncomeApi = e.api);
+  gridExpensesOptions.onGridReady = (e) => (gridExpensesApi = e.api);
+
   agGrid.createGrid(document.querySelector("#incomeGrid"), gridIncomeOptions);
   agGrid.createGrid(
     document.querySelector("#expensesGrid"),
     gridExpensesOptions
   );
-
-  gridIncomeOptions.onGridReady = (e) => (gridIncomeApi = e.api);
-  gridExpensesOptions.onGridReady = (e) => (gridExpensesApi = e.api);
 }
 
 function showTables() {
@@ -126,7 +126,7 @@ function saveModal() {
     data.push(newRow);
   }
 
-  localStorage.setItem(`${gridType}Data`, JSON.stringify(data));
+  saveData();
   if (chartInitialized) {
     gridType === "income" ? updateChart() : updateExpensesChart();
   }
@@ -151,7 +151,7 @@ function deleteRow(btn) {
   const idx = data.findIndex((d) => d === rowNode.data);
   if (idx >= 0) data.splice(idx, 1);
 
-  localStorage.setItem(`${gridType}Data`, JSON.stringify(data));
+  saveData();
   if (chartInitialized) {
     isIncome ? updateChart() : updateExpensesChart();
   }
