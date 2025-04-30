@@ -1,13 +1,9 @@
 .page-header {
-  justify-content: center;
   gap: 10px;
   padding: 15px 10px 0;
 }
 
 .tables-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   gap: 30px;
   margin-top: 30px;
   width: 100%;
@@ -19,57 +15,35 @@
 }
 
 .header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 10px;
 }
 
 .button-container {
-  display: flex;
-  flex-wrap: wrap;
   gap: 10px;
 }
 
 .charts-container {
-  display: none;
-  flex-wrap: wrap;
-  justify-content: center;
   gap: 50px;
 }
 
-.chart-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 .chart-filter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
+  gap: 10px;
   margin-top: 10px;
   font-size: 14px;
 }
 
-#apply-income-filter,
-#apply-expenses-filter {
-  padding: 2px;
-  font-size: 14px;
+#incomeGrid,
+#expensesGrid {
+  width: 500px;
+  height: 400px;
 }
 
-.chart-filter {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
+#incomeChart {
+  width: 400px;
+  height: 400px;
 }
 
-#apply-income-filter,
-#apply-expenses-filter {
-  padding: 4px 10px;
-  font-size: 14px;
+#expensesChart {
+  width: 600px;
+  height: 400px;
 }

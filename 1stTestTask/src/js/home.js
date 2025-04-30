@@ -12,28 +12,55 @@ let gridIncomeApi = null;
 let gridExpensesApi = null;
 let chartInitialized = false;
 
-const tablesContainer = document.querySelector(".tables-container");
-const chartsContainer = document.querySelector(".charts-container");
+const tablesSection = document.getElementById("tablesSection");
+const chartsSection = document.getElementById("chartsSection");
+const headerBtns = document.querySelectorAll(".page-header button");
 const incomeStartInput = document.getElementById("income-start");
 const incomeEndInput = document.getElementById("income-end");
 const expensesStartInput = document.getElementById("expenses-start");
 const expensesEndInput = document.getElementById("expenses-end");
+const modalSaveBtn = document.querySelector(
+  "#dataModal .modal-footer .btn-primary"
+);
+const dateInputs = document.querySelectorAll(
+  "#income-start, #income-end, #expenses-start, #expenses-end, #modal-date"
+);
+const chartFilterBtns = document.querySelectorAll(".chart-filter .btn-primary");
 
-const modalElement = document.getElementById("dataModal");
-const dataModal = new bootstrap.Modal(modalElement);
+const dataModal = new bootstrap.Modal(document.getElementById("dataModal"));
 const modalCategory = document.getElementById("modal-category");
 const modalSum = document.getElementById("modal-sum");
 const modalDate = document.getElementById("modal-date");
 
-const modalState = {
+const GRID_TYPE = {
+  INCOME: "income",
+  EXPENSES: "expenses",
+};
+
+let modalState = {
   editing: false,
   gridType: "",
   rowId: null,
 };
 
+function getContext(btnOrType) {
+  const type =
+    typeof btnOrType === "string"
+      ? btnOrType
+      : btnOrType.closest(".grid-wrapper").id === "income-section"
+      ? GRID_TYPE.INCOME
+      : GRID_TYPE.EXPENSES;
+
+  const api = type === GRID_TYPE.INCOME ? gridIncomeApi : gridExpensesApi;
+  const data = type === GRID_TYPE.INCOME ? gridIncomeData : gridExpensesData;
+
+  return { type, api, data };
+}
+
 function loadData() {
   const inc = JSON.parse(localStorage.getItem("incomeData") || "[]");
   const exp = JSON.parse(localStorage.getItem("expensesData") || "[]");
+
   gridIncomeData.splice(0, gridIncomeData.length, ...inc);
   gridExpensesData.splice(0, gridExpensesData.length, ...exp);
 }
@@ -47,68 +74,69 @@ function initGrids() {
   gridIncomeOptions.onGridReady = (e) => (gridIncomeApi = e.api);
   gridExpensesOptions.onGridReady = (e) => (gridExpensesApi = e.api);
 
-  agGrid.createGrid(document.querySelector("#incomeGrid"), gridIncomeOptions);
+  agGrid.createGrid(document.getElementById("incomeGrid"), gridIncomeOptions);
   agGrid.createGrid(
-    document.querySelector("#expensesGrid"),
+    document.getElementById("expensesGrid"),
     gridExpensesOptions
   );
 }
 
 function showTables() {
-  tablesContainer.style.display = "flex";
-  chartsContainer.style.display = "none";
+  tablesSection.classList.replace("d-none", "d-flex");
+  chartsSection.classList.replace("d-flex", "d-none");
 }
 
 function showCharts() {
-  tablesContainer.style.display = "none";
-  chartsContainer.style.display = "flex";
+  tablesSection.classList.replace("d-flex", "d-none");
+  chartsSection.classList.replace("d-none", "d-flex");
 
   if (!chartInitialized) {
     initChart();
     chartInitialized = true;
-  } else {
-    updateChart();
-    updateExpensesChart();
   }
+  updateChart(incomeStartInput.value, incomeEndInput.value);
+  updateExpensesChart(expensesStartInput.value, expensesEndInput.value);
 }
 
+
 function openAddModal(btn) {
-  modalState.editing = false;
-  modalState.gridType = btn.dataset.target === "grid1" ? "income" : "expenses";
+  modalState = {
+    editing: false,
+    gridType: btn.dataset.target,
+    rowId: null,
+  };
+
   modalCategory.value = "";
   modalSum.value = "";
   modalDate.value = "";
+
   dataModal.show();
 }
 
 function openEditModal(btn) {
-  const parent = btn.closest(".grid-wrapper");
-  const isIncome = !!parent.querySelector("#incomeGrid");
-  const gridType = isIncome ? "income" : "expenses";
-  const api = isIncome ? gridIncomeApi : gridExpensesApi;
+  const { type, api } = getContext(btn);
 
-  const sel = document.querySelector(
-    `input[name="${gridType}RowSelect"]:checked`
-  );
+  const sel = document.querySelector(`input[name="${type}RowSelect"]:checked`);
   if (!sel) return alert("Выберите строку для редактирования");
 
   const rowNode = api.getRowNode(sel.dataset.id);
-  if (!rowNode) return alert("Строка не найдена");
 
-  modalState.editing = true;
-  modalState.gridType = gridType;
-  modalState.rowId = sel.dataset.id;
+  modalState = {
+    editing: true,
+    gridType: type,
+    rowId: sel.dataset.id,
+  };
 
   modalCategory.value = rowNode.data.category;
   modalSum.value = rowNode.data.sum;
   modalDate.value = rowNode.data.date;
+
   dataModal.show();
 }
 
 function saveModal() {
   const { editing, gridType, rowId } = modalState;
-  const api = gridType === "income" ? gridIncomeApi : gridExpensesApi;
-  const data = gridType === "income" ? gridIncomeData : gridExpensesData;
+  const { api, data } = getContext(gridType);
 
   const newRow = {
     category: modalCategory.value,
@@ -117,50 +145,40 @@ function saveModal() {
   };
 
   if (editing) {
-    const rowNode = api.getRowNode(rowId);
-    const idx = data.findIndex((d) => d === rowNode.data);
-    rowNode.setData(newRow);
-    if (idx >= 0) data[idx] = newRow;
+    const rn = api.getRowNode(rowId);
+    Object.assign(rn.data, newRow);
+    rn.setData(rn.data);
   } else {
     api.applyTransaction({ add: [newRow] });
     data.push(newRow);
   }
 
   saveData();
-  if (chartInitialized) {
-    gridType === "income" ? updateChart() : updateExpensesChart();
-  }
+  gridType === GRID_TYPE.INCOME ? updateChart() : updateExpensesChart();
+
   dataModal.hide();
 }
 
 function deleteRow(btn) {
-  const parent = btn.closest(".grid-wrapper");
-  const isIncome = !!parent.querySelector("#incomeGrid");
-  const gridType = isIncome ? "income" : "expenses";
-  const api = isIncome ? gridIncomeApi : gridExpensesApi;
-  const data = isIncome ? gridIncomeData : gridExpensesData;
+  const { type, api, data } = getContext(btn);
 
-  const sel = document.querySelector(
-    `input[name="${gridType}RowSelect"]:checked`
-  );
+  const sel = document.querySelector(`input[name="${type}RowSelect"]:checked`);
   if (!sel) return alert("Выберите строку для удаления");
 
-  const rowNode = api.getRowNode(sel.dataset.id);
-  api.applyTransaction({ remove: [rowNode.data] });
+  const rn = api.getRowNode(sel.dataset.id);
+  api.applyTransaction({ remove: [rn.data] });
 
-  const idx = data.findIndex((d) => d === rowNode.data);
+  const idx = data.findIndex((d) => d === rn.data);
   if (idx >= 0) data.splice(idx, 1);
 
   saveData();
-  if (chartInitialized) {
-    isIncome ? updateChart() : updateExpensesChart();
-  }
+  type === GRID_TYPE.INCOME ? updateChart() : updateExpensesChart();
 }
 
 function showDatePicker(input) {
-  if (typeof input.showPicker === "function") {
+  try {
     input.showPicker();
-  } else {
+  } catch {
     input.focus();
   }
 }
@@ -173,19 +191,31 @@ function applyExpensesFilter() {
   updateExpensesChart(expensesStartInput.value, expensesEndInput.value);
 }
 
-window.showTables = showTables;
-window.showCharts = showCharts;
-window.openAddModal = openAddModal;
-window.openEditModal = openEditModal;
-window.saveModal = saveModal;
-window.deleteRow = deleteRow;
-window.showDatePicker = showDatePicker;
-window.applyIncomeFilter = applyIncomeFilter;
-window.applyExpensesFilter = applyExpensesFilter;
-
 document.addEventListener("DOMContentLoaded", () => {
   loadData();
   initGrids();
+
+  headerBtns[0].addEventListener("click", showTables);
+  headerBtns[1].addEventListener("click", showCharts);
+
+  tablesSection.addEventListener("click", (e) => {
+    const b = e.target;
+    if (b.matches(".open-modal-add")) openAddModal(b);
+    else if (b.matches(".open-modal-edit")) openEditModal(b);
+    else if (b.matches(".delete-btn")) deleteRow(b);
+  });
+
+  modalSaveBtn.addEventListener("click", saveModal);
+
+  dateInputs.forEach((input) => {
+    input.addEventListener("focus", () => showDatePicker(input));
+    input.addEventListener("click", () => showDatePicker(input));
+  });
+
+  chartFilterBtns[0].addEventListener("click", applyIncomeFilter);
+  chartFilterBtns[1].addEventListener("click", applyExpensesFilter);
+
+  showTables();
 });
 
 window.addEventListener("beforeunload", saveData);

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>First Test Task</title>
+    <title>Таблицы доходов и расходов</title>
     <link
       rel="stylesheet"
       href="./node_modules/bootstrap/dist/css/bootstrap.min.css"
@@ -11,180 +11,100 @@
     <link rel="stylesheet" href="src/styles/main.css" />
   </head>
   <body>
-    <header class="page-header d-flex justify-content-center gap-3 py-3">
-      <button class="btn btn-primary" onclick="showTables()">Таблицы</button>
-      <button class="btn btn-primary" onclick="showCharts()">Графики</button>
+    <header
+      class="page-header d-flex justify-content-center align-items-center"
+    >
+      <button class="btn btn-primary">Таблицы</button>
+      <button class="btn btn-primary">Графики</button>
     </header>
 
     <main>
       <section
-        id="tables-section"
-        class="tables-container"
-        aria-labelledby="tables-heading"
+        id="tablesSection"
+        class="tables-container d-flex flex-wrap justify-content-center"
       >
-        <h1 id="tables-heading" class="visually-hidden">
-          Таблицы доходов и расходов
-        </h1>
-
-        <section
-          id="income-section"
-          class="grid-wrapper"
-          aria-labelledby="income-heading"
-        >
+        <section class="grid-wrapper" id="income-section">
           <header
-            id="income-heading"
-            class="header-container d-flex justify-content-between align-items-center mb-2"
+            class="header-container d-flex justify-content-between align-items-center"
           >
             <h2 class="fs-5 fw-bold">Доходы</h2>
-            <div
-              role="group"
-              aria-label="Действия с доходами"
-              class="button-container"
-            >
+            <div class="button-container d-flex flex-wrap">
               <button
                 type="button"
                 class="btn btn-success open-modal-add"
-                data-target="grid1"
-                onclick="openAddModal(this)"
+                data-target="income"
               >
                 Добавить
               </button>
-              <button
-                type="button"
-                class="btn btn-secondary open-modal-edit"
-                onclick="openEditModal(this)"
-              >
+              <button type="button" class="btn btn-secondary open-modal-edit">
                 Изменить
               </button>
-              <button
-                type="button"
-                class="btn btn-danger delete-btn"
-                onclick="deleteRow(this)"
-              >
+              <button type="button" class="btn btn-danger delete-btn">
                 Удалить
               </button>
             </div>
           </header>
-          <div
-            id="incomeGrid"
-            class="ag-theme-alpine"
-            role="grid"
-            aria-describedby="income-heading"
-            style="height: 400px; width: 500px"
-          ></div>
+          <div id="incomeGrid" class="ag-theme-alpine"></div>
         </section>
 
-        <section
-          id="expenses-section"
-          class="grid-wrapper"
-          aria-labelledby="expenses-heading"
-        >
+        <section class="grid-wrapper" id="expenses-section">
           <header
-            id="expenses-heading"
-            class="header-container d-flex justify-content-between align-items-center mb-2"
+            class="header-container d-flex justify-content-between align-items-center"
           >
             <h2 class="fs-5 fw-bold">Расходы</h2>
-            <div
-              role="group"
-              aria-label="Действия с расходами"
-              class="button-container"
-            >
+            <div class="button-container d-flex flex-wrap">
               <button
                 type="button"
                 class="btn btn-success open-modal-add"
-                data-target="grid2"
-                onclick="openAddModal(this)"
+                data-target="expenses"
               >
                 Добавить
               </button>
-              <button
-                type="button"
-                class="btn btn-secondary open-modal-edit"
-                onclick="openEditModal(this)"
-              >
+              <button type="button" class="btn btn-secondary open-modal-edit">
                 Изменить
               </button>
-              <button
-                type="button"
-                class="btn btn-danger delete-btn"
-                onclick="deleteRow(this)"
-              >
+              <button type="button" class="btn btn-danger delete-btn">
                 Удалить
               </button>
             </div>
           </header>
-          <div
-            id="expensesGrid"
-            class="ag-theme-alpine"
-            role="grid"
-            aria-describedby="expenses-heading"
-            style="height: 400px; width: 500px"
-          ></div>
+          <div id="expensesGrid" class="ag-theme-alpine"></div>
         </section>
       </section>
 
       <section
-        id="charts-section"
-        class="charts-container"
-        aria-labelledby="charts-heading"
+        id="chartsSection"
+        class="charts-container d-none flex-wrap justify-content-center"
       >
-        <h2 id="charts-heading" class="visually-hidden">Графики</h2>
-
-        <figure class="chart-wrapper" aria-labelledby="charts-heading">
-          <div id="chart1" style="width: 400px; height: 400px"></div>
-          <figcaption class="chart-filter">
+        <figure class="chart-wrapper d-flex flex-column align-items-center">
+          <div id="incomeChart"></div>
+          <figcaption
+            class="chart-filter d-flex flex-wrap justify-content-center align-items-center"
+          >
             <label for="income-start">Доходы с:</label>
-            <input
-              type="date"
-              id="income-start"
-              onclick="showDatePicker(this)"
-            />
+            <input type="date" id="income-start" />
             <label for="income-end">по:</label>
-            <input type="date" id="income-end" onclick="showDatePicker(this)" />
-            <button
-              type="button"
-              class="btn btn-primary"
-              onclick="applyIncomeFilter()"
-            >
-              Применить
-            </button>
+            <input type="date" id="income-end" />
+            <button type="button" class="btn btn-primary">Применить</button>
           </figcaption>
         </figure>
 
-        <figure class="chart-wrapper" aria-labelledby="charts-heading">
-          <div id="chart2" style="width: 600px; height: 400px"></div>
-          <figcaption class="chart-filter">
+        <figure class="chart-wrapper d-flex flex-column align-items-center">
+          <div id="expensesChart"></div>
+          <figcaption
+            class="chart-filter d-flex flex-wrap justify-content-center align-items-center"
+          >
             <label for="expenses-start">Расходы с:</label>
-            <input
-              type="date"
-              id="expenses-start"
-              onclick="showDatePicker(this)"
-            />
+            <input type="date" id="expenses-start" />
             <label for="expenses-end">по:</label>
-            <input
-              type="date"
-              id="expenses-end"
-              onclick="showDatePicker(this)"
-            />
-            <button
-              type="button"
-              class="btn btn-primary"
-              onclick="applyExpensesFilter()"
-            >
-              Применить
-            </button>
+            <input type="date" id="expenses-end" />
+            <button type="button" class="btn btn-primary">Применить</button>
           </figcaption>
         </figure>
       </section>
     </main>
 
-    <div
-      class="modal fade"
-      id="dataModal"
-      tabindex="-1"
-      aria-labelledby="dataModalLabel"
-      aria-hidden="true"
-    >
+    <div class="modal fade" id="dataModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-3 rounded-3 shadow-sm">
           <div class="modal-header border-0 pb-0">
@@ -226,7 +146,6 @@
                   type="date"
                   class="form-control"
                   id="modal-date"
-                  onclick="showDatePicker(this)"
                   required
                 />
               </div>
@@ -240,14 +159,7 @@
             >
               Отмена
             </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="modal-save-btn"
-              onclick="saveModal()"
-            >
-              Сохранить
-            </button>
+            <button type="button" class="btn btn-primary">Сохранить</button>
           </div>
         </div>
       </div>

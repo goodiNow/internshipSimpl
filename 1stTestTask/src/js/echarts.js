@@ -2,8 +2,8 @@ let incomeChartInstance = null;
 let expensesChartInstance = null;
 
 export function initChart() {
-  incomeChartInstance = echarts.init(document.getElementById("chart1"));
-  expensesChartInstance = echarts.init(document.getElementById("chart2"));
+  incomeChartInstance = echarts.init(document.getElementById("incomeChart"));
+  expensesChartInstance = echarts.init(document.getElementById("expensesChart"));
   updateChart();
   updateExpensesChart();
 }
@@ -12,17 +12,27 @@ const parseDate = (s) => new Date(s);
 const parseNumber = (s) => parseFloat((s || "0").replace(/\s+/g, ""));
 const filterByDate = (data, start, end) => {
   const s = start ? parseDate(start) : null;
-  const e = end ? parseDate(end) : null;
+  const e = end   ? parseDate(end)   : null;
   return data.filter(({ date }) => {
     const d = parseDate(date);
     return (!s || d >= s) && (!e || d <= e);
   });
 };
 
+function formatDateLabel(dateString) {
+  const d     = parseDate(dateString);
+  const day   = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year  = d.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
 export function updateChart(start, end) {
   if (!incomeChartInstance) return;
-  const raw = JSON.parse(localStorage.getItem("incomeData") || "[]");
+
+  const raw  = JSON.parse(localStorage.getItem("incomeData")  || "[]");
   const rows = filterByDate(raw, start, end);
+
   let total = 0;
   const byCat = {};
 
@@ -35,10 +45,7 @@ export function updateChart(start, end) {
     }
   });
 
-  const seriesData = Object.entries(byCat).map(([name, value]) => ({
-    name,
-    value,
-  }));
+  const seriesData = Object.entries(byCat).map(([name, value]) => ({ name, value }));
 
   incomeChartInstance.setOption({
     title: {
@@ -49,7 +56,13 @@ export function updateChart(start, end) {
     },
     tooltip: {
       trigger: "item",
-      formatter: "{b}: {d}%",
+      formatter: params => {
+        return [
+          `${params.name}`,
+          `Сумма: ${params.value}р.`,
+          `Доля: ${params.percent}%`
+        ].join('<br/>');
+      },
     },
     legend: {
       orient: "horizontal",
@@ -73,8 +86,10 @@ export function updateChart(start, end) {
 
 export function updateExpensesChart(start, end) {
   if (!expensesChartInstance) return;
-  const incRaw = JSON.parse(localStorage.getItem("incomeData") || "[]");
+
+  const incRaw = JSON.parse(localStorage.getItem("incomeData")    || "[]");
   const expRaw = JSON.parse(localStorage.getItem("expensesData") || "[]");
+
   const incRows = filterByDate(incRaw, start, end);
   const expRows = filterByDate(expRaw, start, end);
 
@@ -95,8 +110,9 @@ export function updateExpensesChart(start, end) {
     new Set([...Object.keys(incMap), ...Object.keys(expMap)])
   ).sort((a, b) => parseDate(a) - parseDate(b));
 
-  const incValues = allDates.map((d) => incMap[d] || 0);
-  const expValues = allDates.map((d) => expMap[d] || 0);
+  const formattedDates = allDates.map(formatDateLabel);
+  const incValues      = allDates.map((d) => incMap[d] || 0);
+  const expValues      = allDates.map((d) => expMap[d] || 0);
 
   expensesChartInstance.setOption({
     title: {
@@ -113,7 +129,7 @@ export function updateExpensesChart(start, end) {
     },
     xAxis: {
       type: "category",
-      data: allDates,
+      data: formattedDates,
     },
     yAxis: {
       type: "value",
