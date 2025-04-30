@@ -1,181 +1,190 @@
-import { initGrid } from "./aggrid.js";
-import { initChart, updateChart, updateExpensesChart } from "./echarts.js";
+import { initializeGrids } from './aggrid.js';
+import { initializeCharts, renderIncomeChart, renderExpenseComparisonChart } from './echarts.js';
 
-const {
-  gridIncomeData,
-  gridExpensesData,
-  gridIncomeOptions,
-  gridExpensesOptions,
-} = initGrid();
+const { incomeRows, expenseRows, incomeGridOptions, expenseGridOptions } = initializeGrids();
 
-let gridIncomeApi = null;
-let gridExpensesApi = null;
-let chartInitialized = false;
+let incomeGridApi = null;
+let expenseGridApi = null;
+let chartsInitialized = false;
 
-const tablesSection = document.getElementById("tablesSection");
-const chartsSection = document.getElementById("chartsSection");
-const headerBtns = document.querySelectorAll(".page-header button");
-const incomeStartInput = document.getElementById("income-start");
-const incomeEndInput = document.getElementById("income-end");
-const expensesStartInput = document.getElementById("expenses-start");
-const expensesEndInput = document.getElementById("expenses-end");
-const modalSaveBtn = document.querySelector(
-  "#dataModal .modal-footer .btn-primary"
-);
+const tablesContainer = document.getElementById('tablesSection');
+const chartsContainer = document.getElementById('chartsSection');
+
+const btnShowTables = document.getElementById('showTablesBtn');
+const btnShowCharts = document.getElementById('showChartsBtn');
+
+const inputIncomeStart = document.getElementById('income-start');
+const inputIncomeEnd = document.getElementById('income-end');
+const btnApplyIncomeFilter = document.getElementById('applyIncomeFilterBtn');
+
+const inputExpenseStart = document.getElementById('expenses-start');
+const inputExpenseEnd = document.getElementById('expenses-end');
+const btnApplyExpenseFilter = document.getElementById('applyExpenseFilterBtn');
+
+const saveEntryButton = document.getElementById('saveEntryButton');
 const dateInputs = document.querySelectorAll(
-  "#income-start, #income-end, #expenses-start, #expenses-end, #modal-date"
+  '#income-start, #income-end, #expenses-start, #expenses-end, #modal-date'
 );
-const chartFilterBtns = document.querySelectorAll(".chart-filter .btn-primary");
 
-const dataModal = new bootstrap.Modal(document.getElementById("dataModal"));
-const modalCategory = document.getElementById("modal-category");
-const modalSum = document.getElementById("modal-sum");
-const modalDate = document.getElementById("modal-date");
+const entryModal = new bootstrap.Modal(document.getElementById('dataModal'));
+const entryCategoryInput = document.getElementById('modal-category');
+const entrySumInput = document.getElementById('modal-sum');
+const entryDateInput = document.getElementById('modal-date');
 
-const GRID_TYPE = {
-  INCOME: "income",
-  EXPENSES: "expenses",
+const VIEW_TYPE = {
+  INCOME: 'income',
+  EXPENSES: 'expenses'
 };
 
 let modalState = {
-  editing: false,
-  gridType: "",
-  rowId: null,
+  isEditing: false,
+  viewType: '',
+  rowId: null
 };
 
-function getContext(btnOrType) {
-  const type =
-    typeof btnOrType === "string"
-      ? btnOrType
-      : btnOrType.closest(".grid-wrapper").id === "income-section"
-      ? GRID_TYPE.INCOME
-      : GRID_TYPE.EXPENSES;
+function getGridContext(source) {
+  const viewType =
+    typeof source === 'string'
+      ? source
+      : source.closest('.grid-wrapper').id === 'income-section'
+      ? VIEW_TYPE.INCOME
+      : VIEW_TYPE.EXPENSES;
 
-  const api = type === GRID_TYPE.INCOME ? gridIncomeApi : gridExpensesApi;
-  const data = type === GRID_TYPE.INCOME ? gridIncomeData : gridExpensesData;
+  const api = viewType === VIEW_TYPE.INCOME ? incomeGridApi : expenseGridApi;
+  const rows = viewType === VIEW_TYPE.INCOME ? incomeRows : expenseRows;
 
-  return { type, api, data };
+  return { viewType, api, rows };
 }
 
-function loadData() {
-  const inc = JSON.parse(localStorage.getItem("incomeData") || "[]");
-  const exp = JSON.parse(localStorage.getItem("expensesData") || "[]");
+function loadRows() {
+  const inc = JSON.parse(localStorage.getItem('incomeData') || '[]');
+  const exp = JSON.parse(localStorage.getItem('expensesData') || '[]');
 
-  gridIncomeData.splice(0, gridIncomeData.length, ...inc);
-  gridExpensesData.splice(0, gridExpensesData.length, ...exp);
+  incomeRows.splice(0, incomeRows.length, ...inc);
+  expenseRows.splice(0, expenseRows.length, ...exp);
 }
 
-function saveData() {
-  localStorage.setItem("incomeData", JSON.stringify(gridIncomeData));
-  localStorage.setItem("expensesData", JSON.stringify(gridExpensesData));
+function saveRows() {
+  localStorage.setItem('incomeData', JSON.stringify(incomeRows));
+  localStorage.setItem('expensesData', JSON.stringify(expenseRows));
 }
 
-function initGrids() {
-  gridIncomeOptions.onGridReady = (e) => (gridIncomeApi = e.api);
-  gridExpensesOptions.onGridReady = (e) => (gridExpensesApi = e.api);
+function setupGrids() {
+  incomeGridOptions.onGridReady = (e) => (incomeGridApi = e.api);
+  expenseGridOptions.onGridReady = (e) => (expenseGridApi = e.api);
 
-  agGrid.createGrid(document.getElementById("incomeGrid"), gridIncomeOptions);
-  agGrid.createGrid(
-    document.getElementById("expensesGrid"),
-    gridExpensesOptions
-  );
+  agGrid.createGrid(document.getElementById('incomeGrid'), incomeGridOptions);
+  agGrid.createGrid(document.getElementById('expensesGrid'), expenseGridOptions);
 }
 
-function showTables() {
-  tablesSection.classList.replace("d-none", "d-flex");
-  chartsSection.classList.replace("d-flex", "d-none");
+function displayTables() {
+  tablesContainer.classList.replace('d-none', 'd-flex');
+  chartsContainer.classList.replace('d-flex', 'd-none');
 }
 
-function showCharts() {
-  tablesSection.classList.replace("d-flex", "d-none");
-  chartsSection.classList.replace("d-none", "d-flex");
+function displayCharts() {
+  tablesContainer.classList.replace('d-flex', 'd-none');
+  chartsContainer.classList.replace('d-none', 'd-flex');
 
-  if (!chartInitialized) {
-    initChart();
-    chartInitialized = true;
+  if (!chartsInitialized) {
+    initializeCharts();
+    chartsInitialized = true;
   }
-  updateChart(incomeStartInput.value, incomeEndInput.value);
-  updateExpensesChart(expensesStartInput.value, expensesEndInput.value);
+
+  renderIncomeChart(inputIncomeStart.value, inputIncomeEnd.value);
+  renderExpenseComparisonChart(inputExpenseStart.value, inputExpenseEnd.value);
 }
 
-
-function openAddModal(btn) {
+function openEntryModal(button) {
   modalState = {
-    editing: false,
-    gridType: btn.dataset.target,
-    rowId: null,
+    isEditing: false,
+    viewType: button.dataset.target,
+    rowId: null
   };
 
-  modalCategory.value = "";
-  modalSum.value = "";
-  modalDate.value = "";
+  entryCategoryInput.value = '';
+  entrySumInput.value = '';
+  entryDateInput.value = '';
 
-  dataModal.show();
+  entryModal.show();
 }
 
-function openEditModal(btn) {
-  const { type, api } = getContext(btn);
+function openEditEntryModal(button) {
+  const { viewType, api } = getGridContext(button);
+  // determine the actual radio-group name used in aggrid.js
+  const groupName = viewType === VIEW_TYPE.EXPENSES ? 'expenseRowSelect' : 'incomeRowSelect';
 
-  const sel = document.querySelector(`input[name="${type}RowSelect"]:checked`);
-  if (!sel) return alert("Выберите строку для редактирования");
+  const sel = document.querySelector(`input[name="${groupName}"]:checked`);
+  if (!sel) return alert('Выберите строку для редактирования');
 
-  const rowNode = api.getRowNode(sel.dataset.id);
+  const node = api.getRowNode(sel.dataset.id);
 
   modalState = {
-    editing: true,
-    gridType: type,
-    rowId: sel.dataset.id,
+    isEditing: true,
+    viewType,
+    rowId: sel.dataset.id
   };
 
-  modalCategory.value = rowNode.data.category;
-  modalSum.value = rowNode.data.sum;
-  modalDate.value = rowNode.data.date;
+  entryCategoryInput.value = node.data.category;
+  entrySumInput.value = node.data.sum;
+  entryDateInput.value = node.data.date;
 
-  dataModal.show();
+  entryModal.show();
 }
 
-function saveModal() {
-  const { editing, gridType, rowId } = modalState;
-  const { api, data } = getContext(gridType);
+function saveEntry() {
+  const { isEditing, viewType, rowId } = modalState;
+  const { api, rows } = getGridContext(viewType);
 
-  const newRow = {
-    category: modalCategory.value,
-    sum: modalSum.value.replace(/\s/g, ""),
-    date: modalDate.value,
+  const newRecord = {
+    category: entryCategoryInput.value,
+    sum: entrySumInput.value.replace(/\s/g, ''),
+    date: entryDateInput.value
   };
 
-  if (editing) {
-    const rn = api.getRowNode(rowId);
-    Object.assign(rn.data, newRow);
-    rn.setData(rn.data);
+  if (isEditing) {
+    const node = api.getRowNode(rowId);
+    Object.assign(node.data, newRecord);
+    node.setData(node.data);
   } else {
-    api.applyTransaction({ add: [newRow] });
-    data.push(newRow);
+    api.applyTransaction({ add: [newRecord] });
+    rows.push(newRecord);
   }
 
-  saveData();
-  gridType === GRID_TYPE.INCOME ? updateChart() : updateExpensesChart();
+  saveRows();
 
-  dataModal.hide();
+  if (viewType === VIEW_TYPE.INCOME) {
+    renderIncomeChart(inputIncomeStart.value, inputIncomeEnd.value);
+  } else {
+    renderExpenseComparisonChart(inputExpenseStart.value, inputExpenseEnd.value);
+  }
+
+  entryModal.hide();
 }
 
-function deleteRow(btn) {
-  const { type, api, data } = getContext(btn);
+function deleteEntry(button) {
+  const { viewType, api, rows } = getGridContext(button);
+  const groupName = viewType === VIEW_TYPE.EXPENSES ? 'expenseRowSelect' : 'incomeRowSelect';
 
-  const sel = document.querySelector(`input[name="${type}RowSelect"]:checked`);
-  if (!sel) return alert("Выберите строку для удаления");
+  const sel = document.querySelector(`input[name="${groupName}"]:checked`);
+  if (!sel) return alert('Выберите строку для удаления');
 
-  const rn = api.getRowNode(sel.dataset.id);
-  api.applyTransaction({ remove: [rn.data] });
+  const node = api.getRowNode(sel.dataset.id);
+  api.applyTransaction({ remove: [node.data] });
 
-  const idx = data.findIndex((d) => d === rn.data);
-  if (idx >= 0) data.splice(idx, 1);
+  const idx = rows.findIndex((r) => r === node.data);
+  if (idx >= 0) rows.splice(idx, 1);
 
-  saveData();
-  type === GRID_TYPE.INCOME ? updateChart() : updateExpensesChart();
+  saveRows();
+
+  if (viewType === VIEW_TYPE.INCOME) {
+    renderIncomeChart(inputIncomeStart.value, inputIncomeEnd.value);
+  } else {
+    renderExpenseComparisonChart(inputExpenseStart.value, inputExpenseEnd.value);
+  }
 }
 
-function showDatePicker(input) {
+function handleDatePicker(input) {
   try {
     input.showPicker();
   } catch {
@@ -183,39 +192,39 @@ function showDatePicker(input) {
   }
 }
 
-function applyIncomeFilter() {
-  updateChart(incomeStartInput.value, incomeEndInput.value);
+function applyIncomeChartFilter() {
+  renderIncomeChart(inputIncomeStart.value, inputIncomeEnd.value);
 }
 
-function applyExpensesFilter() {
-  updateExpensesChart(expensesStartInput.value, expensesEndInput.value);
+function applyExpenseChartFilter() {
+  renderExpenseComparisonChart(inputExpenseStart.value, inputExpenseEnd.value);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadData();
-  initGrids();
+document.addEventListener('DOMContentLoaded', () => {
+  loadRows();
+  setupGrids();
 
-  headerBtns[0].addEventListener("click", showTables);
-  headerBtns[1].addEventListener("click", showCharts);
+  btnShowTables.addEventListener('click', displayTables);
+  btnShowCharts.addEventListener('click', displayCharts);
 
-  tablesSection.addEventListener("click", (e) => {
-    const b = e.target;
-    if (b.matches(".open-modal-add")) openAddModal(b);
-    else if (b.matches(".open-modal-edit")) openEditModal(b);
-    else if (b.matches(".delete-btn")) deleteRow(b);
+  tablesContainer.addEventListener('click', (e) => {
+    const btn = e.target;
+    if (btn.matches('.open-modal-add')) openEntryModal(btn);
+    else if (btn.matches('.open-modal-edit')) openEditEntryModal(btn);
+    else if (btn.matches('.delete-btn')) deleteEntry(btn);
   });
 
-  modalSaveBtn.addEventListener("click", saveModal);
+  saveEntryButton.addEventListener('click', saveEntry);
 
   dateInputs.forEach((input) => {
-    input.addEventListener("focus", () => showDatePicker(input));
-    input.addEventListener("click", () => showDatePicker(input));
+    input.addEventListener('focus', () => handleDatePicker(input));
+    input.addEventListener('click', () => handleDatePicker(input));
   });
 
-  chartFilterBtns[0].addEventListener("click", applyIncomeFilter);
-  chartFilterBtns[1].addEventListener("click", applyExpensesFilter);
+  btnApplyIncomeFilter.addEventListener('click', applyIncomeChartFilter);
+  btnApplyExpenseFilter.addEventListener('click', applyExpenseChartFilter);
 
-  showTables();
+  displayTables();
 });
 
-window.addEventListener("beforeunload", saveData);
+window.addEventListener('beforeunload', saveRows);

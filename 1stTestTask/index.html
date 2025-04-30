@@ -4,113 +4,80 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Таблицы доходов и расходов</title>
-    <link
-      rel="stylesheet"
-      href="./node_modules/bootstrap/dist/css/bootstrap.min.css"
-    />
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="src/styles/main.css" />
   </head>
   <body>
-    <header
-      class="page-header d-flex justify-content-center align-items-center"
-    >
-      <button class="btn btn-primary">Таблицы</button>
-      <button class="btn btn-primary">Графики</button>
+    <header class="d-flex justify-content-center align-items-center gap-3 py-3">
+      <button id="showTablesBtn" type="button" class="btn btn-primary">Таблицы</button>
+      <button id="showChartsBtn" type="button" class="btn btn-primary">Графики</button>
     </header>
 
     <main>
-      <section
-        id="tablesSection"
-        class="tables-container d-flex flex-wrap justify-content-center"
-      >
+      <section id="tablesSection" class="d-flex flex-wrap justify-content-center gap-4 mt-4">
         <section class="grid-wrapper" id="income-section">
-          <header
-            class="header-container d-flex justify-content-between align-items-center"
-          >
+          <header class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="fs-5 fw-bold">Доходы</h2>
-            <div class="button-container d-flex flex-wrap">
-              <button
-                type="button"
-                class="btn btn-success open-modal-add"
-                data-target="income"
-              >
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-success open-modal-add" data-target="income">
                 Добавить
               </button>
-              <button type="button" class="btn btn-secondary open-modal-edit">
-                Изменить
-              </button>
-              <button type="button" class="btn btn-danger delete-btn">
-                Удалить
-              </button>
+              <button type="button" class="btn btn-secondary open-modal-edit">Изменить</button>
+              <button type="button" class="btn btn-danger delete-btn">Удалить</button>
             </div>
           </header>
           <div id="incomeGrid" class="ag-theme-alpine"></div>
         </section>
 
         <section class="grid-wrapper" id="expenses-section">
-          <header
-            class="header-container d-flex justify-content-between align-items-center"
-          >
+          <header class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="fs-5 fw-bold">Расходы</h2>
-            <div class="button-container d-flex flex-wrap">
-              <button
-                type="button"
-                class="btn btn-success open-modal-add"
-                data-target="expenses"
-              >
+            <div class="d-flex flex-wrap gap-2">
+              <button type="button" class="btn btn-success open-modal-add" data-target="expenses">
                 Добавить
               </button>
-              <button type="button" class="btn btn-secondary open-modal-edit">
-                Изменить
-              </button>
-              <button type="button" class="btn btn-danger delete-btn">
-                Удалить
-              </button>
+              <button type="button" class="btn btn-secondary open-modal-edit">Изменить</button>
+              <button type="button" class="btn btn-danger delete-btn">Удалить</button>
             </div>
           </header>
           <div id="expensesGrid" class="ag-theme-alpine"></div>
         </section>
       </section>
 
-      <section
-        id="chartsSection"
-        class="charts-container d-none flex-wrap justify-content-center"
-      >
-        <figure class="chart-wrapper d-flex flex-column align-items-center">
+      <section id="chartsSection" class="d-none d-flex flex-wrap justify-content-center gap-5 mt-4">
+        <figure class="d-flex flex-column align-items-center">
           <div id="incomeChart"></div>
-          <figcaption
-            class="chart-filter d-flex flex-wrap justify-content-center align-items-center"
-          >
+          <figcaption class="d-flex flex-wrap justify-content-center align-items-center gap-2 mt-3">
             <label for="income-start">Доходы с:</label>
-            <input type="date" id="income-start" />
+            <input type="date" id="income-start" name="income-start" />
             <label for="income-end">по:</label>
-            <input type="date" id="income-end" />
-            <button type="button" class="btn btn-primary">Применить</button>
+            <input type="date" id="income-end" name="income-end" />
+            <button id="applyIncomeFilterBtn" type="button" class="btn btn-primary ms-2">
+              Применить
+            </button>
           </figcaption>
         </figure>
 
-        <figure class="chart-wrapper d-flex flex-column align-items-center">
+        <figure class="d-flex flex-column align-items-center">
           <div id="expensesChart"></div>
-          <figcaption
-            class="chart-filter d-flex flex-wrap justify-content-center align-items-center"
-          >
+          <figcaption class="d-flex flex-wrap justify-content-center align-items-center gap-2 mt-3">
             <label for="expenses-start">Расходы с:</label>
-            <input type="date" id="expenses-start" />
+            <input type="date" id="expenses-start" name="expenses-start" />
             <label for="expenses-end">по:</label>
-            <input type="date" id="expenses-end" />
-            <button type="button" class="btn btn-primary">Применить</button>
+            <input type="date" id="expenses-end" name="expenses-end" />
+            <button id="applyExpenseFilterBtn" type="button" class="btn btn-primary ms-2">
+              Применить
+            </button>
           </figcaption>
         </figure>
       </section>
     </main>
 
-    <div class="modal fade" id="dataModal" tabindex="-1">
+    <div class="modal fade" id="dataModal" tabindex="-1" aria-modal="true" role="dialog">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content p-3 rounded-3 shadow-sm">
           <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title fw-bold" id="dataModalLabel">
-              Добавить информацию
-            </h5>
+            <h5 class="modal-title fw-bold" id="dataModalLabel">Добавить запись</h5>
             <button
               type="button"
               class="btn-close"
@@ -124,8 +91,9 @@
                 <label for="modal-category" class="form-label">Категория</label>
                 <input
                   type="text"
-                  class="form-control"
+                  name="category"
                   id="modal-category"
+                  class="form-control"
                   placeholder="Категория"
                   required
                 />
@@ -134,32 +102,22 @@
                 <label for="modal-sum" class="form-label">Сумма</label>
                 <input
                   type="text"
-                  class="form-control"
+                  name="sum"
                   id="modal-sum"
+                  class="form-control"
                   placeholder="Сумма"
                   required
                 />
               </div>
               <div class="mb-3">
                 <label for="modal-date" class="form-label">Дата</label>
-                <input
-                  type="date"
-                  class="form-control"
-                  id="modal-date"
-                  required
-                />
+                <input type="date" name="date" id="modal-date" class="form-control" required />
               </div>
             </form>
           </div>
           <div class="modal-footer border-0 pt-0">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Отмена
-            </button>
-            <button type="button" class="btn btn-primary">Сохранить</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" id="saveEntryButton" class="btn btn-primary">Сохранить</button>
           </div>
         </div>
       </div>

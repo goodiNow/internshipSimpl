@@ -1,152 +1,160 @@
-let incomeChartInstance = null;
-let expensesChartInstance = null;
+let incomePieChart = null;
+let expenseBarChart = null;
 
-export function initChart() {
-  incomeChartInstance = echarts.init(document.getElementById("incomeChart"));
-  expensesChartInstance = echarts.init(document.getElementById("expensesChart"));
-  updateChart();
-  updateExpensesChart();
+function getLocalData(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) || [];
+  } catch {
+    return [];
+  }
 }
 
-const parseDate = (s) => new Date(s);
-const parseNumber = (s) => parseFloat((s || "0").replace(/\s+/g, ""));
-const filterByDate = (data, start, end) => {
-  const s = start ? parseDate(start) : null;
-  const e = end   ? parseDate(end)   : null;
-  return data.filter(({ date }) => {
-    const d = parseDate(date);
-    return (!s || d >= s) && (!e || d <= e);
-  });
-};
+const parseDateValue = (s) => new Date(s);
+const parseNumberValue = (s) => parseFloat((s || '0').replace(/\s+/g, ''));
 
-function formatDateLabel(dateString) {
-  const d     = parseDate(dateString);
-  const day   = String(d.getDate()).padStart(2, '0');
+function filterDataByDateRange(records, start, end) {
+  const from = start ? parseDateValue(start) : null;
+  const to = end ? parseDateValue(end) : null;
+  return records.filter(({ date }) => {
+    const d = parseDateValue(date);
+    return (!from || d >= from) && (!to || d <= to);
+  });
+}
+
+function formatDateAxisLabel(value) {
+  const d = parseDateValue(value);
+  const day = String(d.getDate()).padStart(2, '0');
   const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year  = d.getFullYear();
+  const year = d.getFullYear();
   return `${day}.${month}.${year}`;
 }
 
-export function updateChart(start, end) {
-  if (!incomeChartInstance) return;
-
-  const raw  = JSON.parse(localStorage.getItem("incomeData")  || "[]");
-  const rows = filterByDate(raw, start, end);
-
-  let total = 0;
-  const byCat = {};
-
-  rows.forEach(({ sum, category }) => {
-    const v = parseNumber(sum);
-    if (!isNaN(v)) {
-      total += v;
-      const key = category || "Без категории";
-      byCat[key] = (byCat[key] || 0) + v;
-    }
+function aggregateDataBy(records, keyFn, valueFn) {
+  const map = {};
+  records.forEach((item) => {
+    const key = keyFn(item);
+    const value = valueFn(item);
+    if (!isNaN(value)) map[key] = (map[key] || 0) + value;
   });
+  return Object.entries(map).map(([name, value]) => ({ name, value }));
+}
 
-  const seriesData = Object.entries(byCat).map(([name, value]) => ({ name, value }));
+export function initializeCharts() {
+  incomePieChart = echarts.init(document.getElementById('incomeChart'));
+  expenseBarChart = echarts.init(document.getElementById('expensesChart'));
+  renderIncomeChart();
+  renderExpenseComparisonChart();
+}
 
-  incomeChartInstance.setOption({
-    title: {
-      text: `Всего\n${total} рублей`,
-      left: "center",
-      top: "middle",
-      textStyle: { fontSize: 20 },
-    },
-    tooltip: {
-      trigger: "item",
-      formatter: params => {
-        return [
-          `${params.name}`,
-          `Сумма: ${params.value}р.`,
-          `Доля: ${params.percent}%`
-        ].join('<br/>');
+export function renderIncomeChart(start, end) {
+  if (!incomePieChart) return;
+
+  const raw = getLocalData('incomeData');
+  const filtered = filterDataByDateRange(raw, start, end);
+  const series = aggregateDataBy(
+    filtered,
+    (row) => row.category || 'Без категории',
+    (row) => parseNumberValue(row.sum)
+  );
+  const total = series.reduce((sum, { value }) => sum + value, 0);
+
+  incomePieChart.setOption({
+    title: [
+      {
+        text: 'Общие доходы по датам',
+        left: 'center'
       },
+      {
+        text: `Всего\n${total.toLocaleString('ru-RU')}`,
+        left: 'center',
+        top: 'middle',
+        textStyle: { fontSize: 20 }
+      }
+    ],
+    tooltip: {
+      trigger: 'item',
+      formatter: ({ name, value, percent }) =>
+        `${name}: ${percent}% (${value.toLocaleString('ru-RU')})`
     },
     legend: {
-      orient: "horizontal",
+      orient: 'horizontal',
       bottom: 0,
-      left: "center",
+      left: 'center'
     },
     series: [
       {
-        name: "Доходы",
-        type: "pie",
-        radius: ["50%", "70%"],
+        name: 'Доходы',
+        type: 'pie',
+        radius: ['50%', '70%'],
         avoidLabelOverlap: false,
         label: { show: false },
         emphasis: { label: { show: false } },
         labelLine: { show: false },
-        data: seriesData,
-      },
-    ],
+        data: series
+      }
+    ]
   });
 }
 
-export function updateExpensesChart(start, end) {
-  if (!expensesChartInstance) return;
+export function renderExpenseComparisonChart(start, end) {
+  if (!expenseBarChart) return;
 
-  const incRaw = JSON.parse(localStorage.getItem("incomeData")    || "[]");
-  const expRaw = JSON.parse(localStorage.getItem("expensesData") || "[]");
+  const incRaw = getLocalData('incomeData');
+  const expRaw = getLocalData('expensesData');
+  const incFiltered = filterDataByDateRange(incRaw, start, end);
+  const expFiltered = filterDataByDateRange(expRaw, start, end);
 
-  const incRows = filterByDate(incRaw, start, end);
-  const expRows = filterByDate(expRaw, start, end);
+  const incSeries = aggregateDataBy(
+    incFiltered,
+    (row) => row.date,
+    (row) => parseNumberValue(row.sum)
+  );
+  const expSeries = aggregateDataBy(
+    expFiltered,
+    (row) => row.date,
+    (row) => parseNumberValue(row.sum)
+  );
 
-  const incMap = {};
-  const expMap = {};
+  const allDates = Array.from(new Set([...incSeries, ...expSeries].map((item) => item.name))).sort(
+    (a, b) => parseDateValue(a) - parseDateValue(b)
+  );
 
-  incRows.forEach(({ sum, date }) => {
-    const v = parseNumber(sum);
-    if (!isNaN(v)) incMap[date] = (incMap[date] || 0) + v;
-  });
+  const incValues = allDates.map((date) => incSeries.find((e) => e.name === date)?.value || 0);
+  const expValues = allDates.map((date) => expSeries.find((e) => e.name === date)?.value || 0);
 
-  expRows.forEach(({ sum, date }) => {
-    const v = parseNumber(sum);
-    if (!isNaN(v)) expMap[date] = (expMap[date] || 0) + v;
-  });
-
-  const allDates = Array.from(
-    new Set([...Object.keys(incMap), ...Object.keys(expMap)])
-  ).sort((a, b) => parseDate(a) - parseDate(b));
-
-  const formattedDates = allDates.map(formatDateLabel);
-  const incValues      = allDates.map((d) => incMap[d] || 0);
-  const expValues      = allDates.map((d) => expMap[d] || 0);
-
-  expensesChartInstance.setOption({
+  expenseBarChart.setOption({
     title: {
-      text: "Доходы и расходы по датам",
-      left: "center",
+      text: 'Доходы и расходы по датам',
+      left: 'center'
     },
     tooltip: {
-      trigger: "axis",
+      trigger: 'axis',
+      formatter: (params) => {
+        const rawDate = params[0].axisValue;
+        const date = formatDateAxisLabel(rawDate);
+        let text = `${date}<br/>`;
+        params.forEach((item) => {
+          text += `${item.marker} ${item.seriesName}: ${item.value.toLocaleString('ru-RU')}<br/>`;
+        });
+        return text;
+      }
     },
     legend: {
-      data: ["Доходы", "Расходы"],
+      data: ['Доходы', 'Расходы'],
       bottom: 0,
-      left: "center",
+      left: 'center'
     },
     xAxis: {
-      type: "category",
-      data: formattedDates,
+      type: 'category',
+      data: allDates,
+      axisTick: { alignWithLabel: true }
     },
     yAxis: {
-      type: "value",
+      type: 'value'
     },
     series: [
-      {
-        name: "Доходы",
-        type: "bar",
-        data: incValues,
-        itemStyle: { color: "#5470C6" },
-      },
-      {
-        name: "Расходы",
-        type: "bar",
-        data: expValues,
-        itemStyle: { color: "#91CC75" },
-      },
-    ],
+      { name: 'Доходы', type: 'bar', data: incValues },
+      { name: 'Расходы', type: 'bar', data: expValues }
+    ]
   });
 }
